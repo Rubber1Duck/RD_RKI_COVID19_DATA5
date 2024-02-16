@@ -91,9 +91,9 @@ def update():
         if c not in key_list_ID0_hist
     }
     ID0 = BL.groupby(by=key_list_ID0_hist, as_index=False, observed=True).agg(agg_key)
-    LK.drop(["IdBundesland", "Bundesland"], inplace=True, axis=1)
-    LK.sort_values(by=key_list_LK_hist, inplace=True)
-    LK.reset_index(inplace=True, drop=True)
+    #LK.drop(["IdBundesland", "Bundesland"], inplace=True, axis=1)
+    #LK.sort_values(by=key_list_LK_hist, inplace=True)
+    #LK.reset_index(inplace=True, drop=True)
     BL.drop(["IdLandkreis", "Landkreis"], inplace=True, axis=1)
     ID0.drop(["IdLandkreis", "Landkreis"], inplace=True, axis=1)
     ID0["IdBundesland"] = "00"
@@ -101,7 +101,7 @@ def update():
     BL = pd.concat([ID0, BL])
     BL.sort_values(by=key_list_BL_hist, inplace=True)
     BL.reset_index(inplace=True, drop=True)
-    LK["Meldedatum"] = pd.to_datetime(LK["Meldedatum"]).dt.date
+    #LK["Meldedatum"] = pd.to_datetime(LK["Meldedatum"]).dt.date
     BL["Meldedatum"] = pd.to_datetime(BL["Meldedatum"]).dt.date
     # fill dates for every region
     startDate = "2020-01-01"
@@ -110,12 +110,12 @@ def update():
         date_range_str.append(datum.strftime("%Y-%m-%d"))
     allDates = pd.DataFrame(date_range_str, columns=["Datum"])
     BL_ID = pd.DataFrame(pd.unique(BL["IdBundesland"]).copy(), columns=["IdBundesland"])
-    LK_ID = pd.DataFrame(pd.unique(LK["IdLandkreis"]).copy(), columns=["IdLandkreis"])
+    #LK_ID = pd.DataFrame(pd.unique(LK["IdLandkreis"]).copy(), columns=["IdLandkreis"])
     # add Bundesland, Landkreis and Einwohner
     BL_ID.insert(loc=1, column="Bundesland", value="")
     BL_ID.insert(loc=2, column="Einwohner", value="")
-    LK_ID.insert(loc=1, column="Landkreis", value="")
-    LK_ID.insert(loc=2, column="Einwohner", value="")
+    #LK_ID.insert(loc=1, column="Landkreis", value="")
+    #LK_ID.insert(loc=2, column="Einwohner", value="")
     BV_mask = ((BV_BL_A00["AGS"].isin(BL_ID["IdBundesland"])) & (BV_BL_A00["GueltigAb"] <= Datenstand) & (BV_BL_A00["GueltigBis"] >= Datenstand))
     BV_masked = BV_BL_A00[BV_mask].copy()
     BV_masked.drop(["GueltigAb", "GueltigBis", "Altersgruppe", "männlich", "weiblich"], inplace=True, axis=1)
@@ -123,35 +123,35 @@ def update():
     ID = pd.merge(left=ID, right=BV_masked, left_on="IdBundesland", right_on="AGS", how="left")
     BL_ID["Bundesland"] = ID["Name"].copy()
     BL_ID["Einwohner"] = ID["Einwohner"].copy()
-    BV_mask = ((BV_LK_A00["AGS"].isin(LK["IdLandkreis"])) & (BV_LK_A00["GueltigAb"] <= Datenstand) & (BV_LK_A00["GueltigBis"] >= Datenstand))
-    BV_masked = BV_LK_A00[BV_mask].copy()
-    BV_masked.drop(["GueltigAb", "GueltigBis", "Altersgruppe", "männlich", "weiblich"], inplace=True, axis=1)
-    ID = LK_ID["IdLandkreis"].copy()
-    ID = pd.merge(left=ID, right=BV_masked, left_on="IdLandkreis", right_on="AGS", how="left")
-    LK_ID["Landkreis"] = ID["Name"].copy()
-    LK_ID["Einwohner"] = ID["Einwohner"].copy()
+    #BV_mask = ((BV_LK_A00["AGS"].isin(LK["IdLandkreis"])) & (BV_LK_A00["GueltigAb"] <= Datenstand) & (BV_LK_A00["GueltigBis"] >= Datenstand))
+    #BV_masked = BV_LK_A00[BV_mask].copy()
+    #BV_masked.drop(["GueltigAb", "GueltigBis", "Altersgruppe", "männlich", "weiblich"], inplace=True, axis=1)
+    #ID = LK_ID["IdLandkreis"].copy()
+    #ID = pd.merge(left=ID, right=BV_masked, left_on="IdLandkreis", right_on="AGS", how="left")
+    #LK_ID["Landkreis"] = ID["Name"].copy()
+    #LK_ID["Einwohner"] = ID["Einwohner"].copy()
     BL_Dates = BL_ID.merge(allDates, how="cross")
     BL_Dates = ut.squeeze_dataframe(BL_Dates)
-    LK_Dates = LK_ID.merge(allDates, how="cross")
-    LK_Dates = ut.squeeze_dataframe(LK_Dates)
+    #LK_Dates = LK_ID.merge(allDates, how="cross")
+    #LK_Dates = ut.squeeze_dataframe(LK_Dates)
     BL_Dates["Datum"] = pd.to_datetime(BL_Dates["Datum"]).dt.date
-    LK_Dates["Datum"] = pd.to_datetime(LK_Dates["Datum"]).dt.date
+    #LK_Dates["Datum"] = pd.to_datetime(LK_Dates["Datum"]).dt.date
     BL = BL.merge(BL_Dates, how="right", left_on=["IdBundesland", "Meldedatum"], right_on=["IdBundesland", "Datum"])
     BL["Bundesland_x"] = BL["Bundesland_y"]
     BL["Meldedatum"] = BL["Datum"]
     BL.rename({"Bundesland_x": "Bundesland"}, inplace=True, axis=1)
     BL.drop(["Bundesland_y", "Datum"], inplace=True, axis=1)
-    LK = LK.merge(LK_Dates, how="right", left_on=["IdLandkreis", "Meldedatum"], right_on=["IdLandkreis", "Datum"])
-    LK["Landkreis_x"] = LK["Landkreis_y"]
-    LK["Meldedatum"] = LK["Datum"]
-    LK.rename({"Landkreis_x": "Landkreis"}, inplace=True, axis=1)
-    LK.drop(["Landkreis_y", "Datum"], inplace=True, axis=1)
+    #LK = LK.merge(LK_Dates, how="right", left_on=["IdLandkreis", "Meldedatum"], right_on=["IdLandkreis", "Datum"])
+    #LK["Landkreis_x"] = LK["Landkreis_y"]
+    #LK["Meldedatum"] = LK["Datum"]
+    #LK.rename({"Landkreis_x": "Landkreis"}, inplace=True, axis=1)
+    #LK.drop(["Landkreis_y", "Datum"], inplace=True, axis=1)
     BL["cases"] = BL["cases"].fillna(0).astype(int)
     BL["deaths"] = BL["deaths"].fillna(0).astype(int)
     BL["recovered"] = BL["recovered"].fillna(0).astype(int)
-    LK["cases"] = LK["cases"].fillna(0).astype(int)
-    LK["deaths"] = LK["deaths"].fillna(0).astype(int)
-    LK["recovered"] = LK["recovered"].fillna(0).astype(int)
+    #LK["cases"] = LK["cases"].fillna(0).astype(int)
+    #LK["deaths"] = LK["deaths"].fillna(0).astype(int)
+    #LK["recovered"] = LK["recovered"].fillna(0).astype(int)
     BL["Meldedatum"] = BL["Meldedatum"].astype(str)
     aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
     print(aktuelleZeit, ":   |-calculating BL incidence ...")
@@ -169,72 +169,72 @@ def update():
     del BL_ID
     del BL_Dates
     gc.collect()
-    LK["Meldedatum"] = LK["Meldedatum"].astype(str)
-    aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
-    print(aktuelleZeit, ":   |-calculating LK incidence ...")
-    unique_LKID = LK_ID.IdLandkreis.unique()
-    LK_I = ut.calc_incidence_LK(df=LK, unique_ID=unique_LKID)
-    LK = LK.merge(LK_I, how="left", left_on=["Meldedatum", "IdLandkreis"], right_on=["Meldedatum", "IdLandkreis"])
-    LK["incidence7d"] = LK["incidence7d"].round(5)
-    LK.drop(["Einwohner"], inplace=True, axis=1)
-    LK_I = pd.DataFrame()
-    LKID = pd.DataFrame()
-    LK_ID = pd.DataFrame()
-    LK_Dates = pd.DataFrame()
-    del LK_I
-    del LKID
-    del LK_ID
-    del LK_Dates
-    gc.collect()
+    #LK["Meldedatum"] = LK["Meldedatum"].astype(str)
+    #aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
+    #print(aktuelleZeit, ":   |-calculating LK incidence ...")
+    #unique_LKID = LK_ID.IdLandkreis.unique()
+    #LK_I = ut.calc_incidence_LK(df=LK, unique_ID=unique_LKID)
+    #LK = LK.merge(LK_I, how="left", left_on=["Meldedatum", "IdLandkreis"], right_on=["Meldedatum", "IdLandkreis"])
+    #LK["incidence7d"] = LK["incidence7d"].round(5)
+    #LK.drop(["Einwohner"], inplace=True, axis=1)
+    #LK_I = pd.DataFrame()
+    #LKID = pd.DataFrame()
+    #LK_ID = pd.DataFrame()
+    #LK_Dates = pd.DataFrame()
+    #del LK_I
+    #del LKID
+    #del LK_ID
+    #del LK_Dates
+    #gc.collect()
     
     # store
     path = os.path.join(base_path, "..", "dataStore", "history")
     archivPath = os.path.join(base_path, "..", "archiv", "history")
-    LKHistoryFeatherFileName = "districts_cases.feather"
+    #LKHistoryFeatherFileName = "districts_cases.feather"
     BLHistoryFeatherFileName = "states_cases.feather"
-    LKHistoryFeatherFullPath = os.path.join(base_path, "..", "dataStore", "history", LKHistoryFeatherFileName)
+    #LKHistoryFeatherFullPath = os.path.join(base_path, "..", "dataStore", "history", LKHistoryFeatherFileName)
     BLHistoryFeatherFullPath = os.path.join(base_path, "..", "dataStore", "history", BLHistoryFeatherFileName)
     # complete districts (cases, deaths, recovered. incidence)
-    ut.write_json(LK, "districts.json", path)
+    #ut.write_json(LK, "districts.json", path)
     # complete states (cases, deaths, recovered. incidence)
     ut.write_json(BL, "states.json", path)
     # complete districts (cases, deaths, recovered. incidence) short
-    LK.rename(columns={"IdLandkreis": "i", "Landkreis": "t", "Meldedatum": "m", "cases": "c", "deaths": "d", "recovered": "r", "cases7d": "c7", "incidence7d": "i7"}, inplace=True)
-    ut.write_json(LK, "districts_new.json", path)
+    #LK.rename(columns={"IdLandkreis": "i", "Landkreis": "t", "Meldedatum": "m", "cases": "c", "deaths": "d", "recovered": "r", "cases7d": "c7", "incidence7d": "i7"}, inplace=True)
+    #ut.write_json(LK, "districts_new.json", path)
     # complete states (cases, deaths, recovered. incidence) short
     BL.rename(columns={"IdBundesland": "i", "Bundesland": "t", "Meldedatum": "m", "cases": "c", "deaths": "d", "recovered": "r", "cases7d": "c7", "incidence7d": "i7"}, inplace=True)
     ut.write_json(BL, "states_new.json", path)
     # calculate cases diff
     aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
     print(aktuelleZeit, ": calculating history difference")
-    LK.drop(["t", "d", "r", "c7", "i7"], inplace=True, axis=1)
+    #LK.drop(["t", "d", "r", "c7", "i7"], inplace=True, axis=1)
     BL.drop(["t", "d", "r", "c7", "i7"], inplace=True, axis=1)
-    if os.path.exists(LKHistoryFeatherFullPath):
-        oldLK = ut.read_file(fn=LKHistoryFeatherFullPath)
-    ut.write_file(df=LK, fn=LKHistoryFeatherFullPath, compression="lz4")
+    #if os.path.exists(LKHistoryFeatherFullPath):
+    #    oldLK = ut.read_file(fn=LKHistoryFeatherFullPath)
+    #ut.write_file(df=LK, fn=LKHistoryFeatherFullPath, compression="lz4")
     if os.path.exists(BLHistoryFeatherFullPath):
         oldBL = ut.read_file(fn=BLHistoryFeatherFullPath)
     ut.write_file(df=BL, fn=BLHistoryFeatherFullPath, compression="lz4")
-    try:
-        LKDiff = ut.get_different_rows(oldLK, LK)
-    except:
-        LKDiff = LK.copy()
+    #try:
+    #    LKDiff = ut.get_different_rows(oldLK, LK)
+    #except:
+    #    LKDiff = LK.copy()
     try:
         BLDiff = ut.get_different_rows(oldBL, BL)
     except:
         BLDiff = BL.copy()
-    LKDiff["cD"] = dt.datetime.strftime(Datenstand, "%Y-%m-%d")
+    #LKDiff["cD"] = dt.datetime.strftime(Datenstand, "%Y-%m-%d")
     BLDiff["cD"] = dt.datetime.strftime(Datenstand, "%Y-%m-%d")
-    LKDiffFullFeatherPath = os.path.join(base_path, "..", "dataStore", "history", "districts_cases_Diff.feather")
+    #LKDiffFullFeatherPath = os.path.join(base_path, "..", "dataStore", "history", "districts_cases_Diff.feather")
     BLDiffFullFeatherPath = os.path.join(base_path, "..", "dataStore", "history", "states_cases_Diff.feather")
     path = os.path.join(base_path, "..", "dataStore", "history")
-    if os.path.exists(LKDiffFullFeatherPath):
-        LKoldDiff = ut.read_file(LKDiffFullFeatherPath)
-        LKDiff = pd.concat([LKoldDiff, LKDiff])
-        LKDiff.sort_values(by=["i", "m", "cD"], inplace=True)
-        LKDiff.reset_index(inplace=True, drop=True)
-    ut.write_file(LKDiff, LKDiffFullFeatherPath, compression="lz4")
-    ut.write_json(LKDiff, "districts_cases_Diff.json", path)
+    #if os.path.exists(LKDiffFullFeatherPath):
+    #    LKoldDiff = ut.read_file(LKDiffFullFeatherPath)
+    #    LKDiff = pd.concat([LKoldDiff, LKDiff])
+    #    LKDiff.sort_values(by=["i", "m", "cD"], inplace=True)
+    #    LKDiff.reset_index(inplace=True, drop=True)
+    #ut.write_file(LKDiff, LKDiffFullFeatherPath, compression="lz4")
+    #ut.write_json(LKDiff, "districts_cases_Diff.json", path)
     if os.path.exists(BLDiffFullFeatherPath):
         BLoldDiff = ut.read_file(BLDiffFullFeatherPath)
         BLDiff = pd.concat([BLoldDiff, BLDiff])
