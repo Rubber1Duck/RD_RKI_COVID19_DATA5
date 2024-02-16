@@ -7,20 +7,15 @@ import utils as ut
 import gc
 
 def update():
-    startTime = dt.datetime.now()
     base_path = os.path.dirname(os.path.abspath(__file__))
     meta_path = os.path.join(base_path, "..", "dataStore", "meta")
-    filename_meta = "meta_new.json"
-    actual_meta = "meta.json"
-    feather_path = os.path.join(base_path, "..", "dataBase.feather")
+    meta_path = os.path.normpath(meta_path)
+    filename_actualmeta = "meta.json"
+    filename_newmeta = "meta_new.json"
     BV_csv_path = os.path.join(base_path, "..", "Bevoelkerung", "Bevoelkerung.csv")
-    LK_dtypes = {"Datenstand": "object", "IdLandkreis": "str", "Landkreis": "str", "incidence_7d": "float64"}
-    LK_dtypes_single_files = {"Datenstand": "object", "IdLandkreis": "str", "Landkreis": "str", "AnzahlFall_7d": "int32", "incidence_7d": "float64"}
-    BL_dtypes = {"Datenstand": "object", "IdBundesland": "str", "Bundesland": "str", "incidence_7d": "float64"}
-    kum_dtypes = {"D": "object", "I": "str", "T": "str", "i": "float64"}
+    BV_csv_path = os.path.normpath(BV_csv_path)
     BV_dtypes = {"AGS": "str", "Altersgruppe": "str", "Name": "str", "GueltigAb": "object", "GueltigBis": "object", "Einwohner": "Int32", "männlich": "Int32", "weiblich": "Int32"}
-    CV_dtypes = {"IdLandkreis": "str", "Altersgruppe": "str", "Geschlecht": "str", "NeuerFall": "Int32", "NeuerTodesfall": "Int32", "NeuGenesen": "Int32",
-                 "AnzahlFall": "Int32", "AnzahlTodesfall": "Int32", "AnzahlGenesen": "Int32", "Meldedatum": "object"}
+    
     # open bevoelkerung.csv
     BV = pd.read_csv(BV_csv_path, usecols=BV_dtypes.keys(), dtype=BV_dtypes)
     BV["GueltigAb"] = pd.to_datetime(BV["GueltigAb"])
@@ -33,14 +28,9 @@ def update():
     BV_LK.reset_index(inplace=True, drop=True)
     BV_LK_A00 = BV_LK[BV_LK["Altersgruppe"] == "A00+"].copy()
     BV_LK_A00.reset_index(inplace=True, drop=True)
-    # ----- Squeeze the dataframe to ideal memory size (see "compressing" Medium article and run_dataframe_squeeze.py for background)
-    BV = ut.squeeze_dataframe(BV)
-    BV_BL = ut.squeeze_dataframe(BV_BL)
-    BV_BL_A00 = ut.squeeze_dataframe(BV_BL_A00)
-    BV_LK = ut.squeeze_dataframe(BV_LK)
-    BV_LK_A00 = ut.squeeze_dataframe(BV_LK_A00)
     # load covid latest from web
-    with open(meta_path + "/" + filename_meta, "r", encoding="utf8") as file:
+    full_newmeta_path = os.path.normpath(os.path.join(meta_path, filename_newmeta))
+    with open(full_newmeta_path, "r", encoding="utf8") as file:
         metaObj = json.load(file)
     fileNameOrig = metaObj["filename"]
     fileSize = int(metaObj["size"])
@@ -49,88 +39,27 @@ def update():
     Datenstand = dt.datetime.fromtimestamp(timeStamp / 1000)
     Datenstand = Datenstand.replace(hour=0, minute=0, second=0, microsecond=0)
     try:
-        with open(meta_path + "/" + actual_meta, "r", encoding="utf8") as file:
+        full_actualmeta_path = os.path.normpath(os.path.join(meta_path, filename_actualmeta))
+        with open(full_actualmeta_path, "r", encoding="utf8") as file:
             metaActual = json.load(file)
         oldDatenstandStr = dt.datetime.strptime(dt.datetime.fromtimestamp(metaActual["timestamp"] / 1000), "%Y-%m-%d")
     except:
         oldDatenstand = Datenstand.date() - dt.timedelta(days=1)
         oldDatenstandStr = dt.datetime.strftime(oldDatenstand, "%Y-%m-%d")
-    filedate = (dt.datetime.fromtimestamp(metaObj["modified"] / 1000).date().strftime("%Y-%m-%d"))
     fileSizeMb = round(fileSize / 1024 / 1024, 1)
-    fileNameRoot = "RKI_COVID19_"
-    fileName = fileNameRoot + filedate + ".csv"
     aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
     print(aktuelleZeit, ": loading", fileNameOrig, "(size:", fileSize, "bytes =", fileSizeMb,
           "MegaByte)")
-    # for testing or fixing uncommend the following lines and set the values
-    # path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data')
-    # testfile = os.path.join(path, '2023-12-26_Deutschland_SarsCov2_Infektionen.csv.xz')
-    # LK = pd.read_csv(testfile, usecols=CV_dtypes.keys(), dtype=CV_dtypes)
-    # Datenstand = dt.datetime(year=2023, month=12, day=26, hour=0, minute=0, second=0, microsecond=0)
-    # fileName = "RKI_COVID19_2023-12-26.csv"
-    LK = pd.read_csv(url, usecols=CV_dtypes.keys(), dtype=CV_dtypes)
-    LK.sort_values(by=["IdLandkreis", "Altersgruppe", "Geschlecht", "Meldedatum"], axis=0, inplace=True, ignore_index=True)
-    LK.reset_index(drop=True, inplace=True)
-    # ----- Squeeze the dataframe to ideal memory size (see "compressing" Medium article and run_dataframe_squeeze.py for background)
-    LK = ut.squeeze_dataframe(LK)
+    
+    LK = ut.read_file(fn=url)
+    
     aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
     print(aktuelleZeit, ":",LK.shape[0],"rows")
-    data_path = os.path.join(base_path, "..", "data")
-    fileNameXz = fileName + ".xz"
-    full_path = os.path.join(base_path, data_path, fileName)
-    full_pathXz = os.path.join(base_path, data_path, fileNameXz)
-    data_path = os.path.normpath(data_path)
-    full_path = os.path.normpath(full_path)
-    istDatei = os.path.isfile(full_path)
-    istDateiXz = os.path.isfile(full_pathXz)
-    if not (istDatei | istDateiXz):
-        print(aktuelleZeit, ": writing DataFrame to", fileName, "...")
-        LK.to_csv(full_path, index=False, header=True, lineterminator="\n", encoding="utf-8", date_format="%Y-%m-%d", columns=CV_dtypes.keys())
-    else:
-        if istDatei:
-            fileExists = fileName
-        else:
-            fileExists = fileNameXz
-        aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
-        print(aktuelleZeit, ":", fileExists, "already exists.")
-    aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
-    print(aktuelleZeit, ": add missing columns ...")
-    LK["IdLandkreis"] = LK["IdLandkreis"].astype(str).str.zfill(5)
-    LK.insert(loc=0, column="IdBundesland", value=LK["IdLandkreis"].str[:-3].copy())
-    LK["Meldedatum"] = pd.to_datetime(LK["Meldedatum"]).dt.date
-    LK.insert(loc=0, column="Datenstand", value=Datenstand.date())
-    # add Bundesland und Landkreis
-    LK.insert(loc=2, column="Bundesland", value="")
-    LK.insert(loc=4, column="Landkreis", value="")
-    BV_mask = ((BV["AGS"].isin(LK["IdBundesland"])) & (BV["Altersgruppe"] == "A00+") & (BV["GueltigAb"] <= Datenstand) & (BV["GueltigBis"] >= Datenstand))
-    BV_masked = BV[BV_mask].copy()
-    BV_masked.drop(["GueltigAb", "GueltigBis", "Altersgruppe", "Einwohner", "männlich", "weiblich"], inplace=True, axis=1)
-    ID = LK["IdBundesland"].copy()
-    ID = pd.merge(left=ID, right=BV_masked, left_on="IdBundesland", right_on="AGS", how="left")
-    LK["Bundesland"] = ID["Name"].copy()
-    BV_mask = ((BV["AGS"].isin(LK["IdLandkreis"])) & (BV["Altersgruppe"] == "A00+") & (BV["GueltigAb"] <= Datenstand) & (BV["GueltigBis"] >= Datenstand))
-    BV_masked = BV[BV_mask].copy()
-    BV_masked.drop(["GueltigAb", "GueltigBis", "Altersgruppe", "Einwohner", "männlich", "weiblich"], inplace=True, axis=1)
-    ID = LK["IdLandkreis"].copy()
-    ID = pd.merge(left=ID, right=BV_masked, left_on="IdLandkreis", right_on="AGS", how="left")
-    LK["Landkreis"] = ID["Name"].copy()
-    ID = pd.DataFrame()
-    del ID
-    gc.collect()
-    LK.insert(loc=0, column="IdStaat", value="00")
-    LK = LK[LK["Landkreis"].notna()]
-    LK.reset_index(inplace=True, drop=True)
-    # ----- Squeeze the dataframe to ideal memory size (see "compressing" Medium article and run_dataframe_squeeze.py for background)
-    LK = ut.squeeze_dataframe(LK)
-    # store dataBase to feather file to save memory
-    ut.write_file(df=LK, fn=feather_path, compression="lz4")
-    aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
-    
+
     # History
     # DistrictCasesHistory, DistrictDeathsHistory, DistrictRecoveredHistory
     # StateCasesHistory, StateDeathsHistory, StateRecoveredHistory
     print(aktuelleZeit, ": calculating history data ...")
-    LK = ut.read_file(fn=feather_path)
     LK.drop(["IdStaat"], inplace=True, axis=1)
     # used keylists
     key_list_LK_hist = ["IdLandkreis", "Meldedatum"]
@@ -143,24 +72,21 @@ def update():
     LK.rename(columns={"AnzahlFall": "cases", "AnzahlTodesfall": "deaths", "AnzahlGenesen": "recovered"}, inplace=True)
     agg_key = {
         c: "max"
-        if c in ["IdBundesland", "Datenstand", "Landkreis", "Bundesland"]
-        else "sum"
+        if c in ["IdBundesland", "Datenstand", "Landkreis", "Bundesland"] else "sum"
         for c in LK.columns
         if c not in key_list_LK_hist
     }
     LK = LK.groupby(by=key_list_LK_hist, as_index=False, observed=True).agg(agg_key)
     agg_key = {
         c: "max"
-        if c in ["IdLandkreis", "Datenstand", "Landkreis", "Bundesland"]
-        else "sum"
+        if c in ["IdLandkreis", "Datenstand", "Landkreis", "Bundesland"] else "sum"
         for c in LK.columns
         if c not in key_list_BL_hist
     }
     BL = LK.groupby(by=key_list_BL_hist, as_index=False, observed=True).agg(agg_key)
     agg_key = {
         c: "max"
-        if c in ["IdBundesland", "IdLandkreis", "Datenstand", "Bundesland", "Landkreis"]
-        else "sum"
+        if c in ["IdBundesland", "IdLandkreis", "Datenstand", "Bundesland", "Landkreis"] else "sum"
         for c in BL.columns
         if c not in key_list_ID0_hist
     }
@@ -227,14 +153,12 @@ def update():
     LK["deaths"] = LK["deaths"].fillna(0).astype(int)
     LK["recovered"] = LK["recovered"].fillna(0).astype(int)
     BL["Meldedatum"] = BL["Meldedatum"].astype(str)
-    BL.insert(loc=7, column="cases7d", value=0)
-    BL.insert(loc=8, column="incidence7d", value=0.0)
     aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
     print(aktuelleZeit, ":   |-calculating BL incidence ...")
     unique_BLID = BL_ID["IdBundesland"].unique()
     BL_I = ut.calc_incidence_BL(df=BL, unique_ID=unique_BLID)
-    BL["cases7d"] = BL_I["cases7d"]
-    BL["incidence7d"] = BL_I["incidence7d"].round(5)
+    BL = BL.merge(BL_I, how="left", left_on=["IdBundesland", "Meldedatum"], right_on=["IdBundesland", "Meldedatum"])
+    BL["incidence7d"] = BL["incidence7d"].round(5)
     BL.drop(["Einwohner"], inplace=True, axis=1)
     BL_I = pd.DataFrame()
     BLID = pd.DataFrame()
@@ -263,13 +187,13 @@ def update():
     #del LKID
     #del LK_ID
     #del LK_Dates
-    gc.collect()
+    #gc.collect()
     
     # store
     path = os.path.join(base_path, "..", "dataStore", "history")
     archivPath = os.path.join(base_path, "..", "archiv", "history")
     #LKHistoryFeatherFileName = "districts_cases.feather"
-    BLHistoryFeatherFileName = "states_cases.feather"
+    BLHistoryFeatherFileName = "state00_cases.feather"
     #LKHistoryFeatherFullPath = os.path.join(base_path, "..", "dataStore", "history", LKHistoryFeatherFileName)
     BLHistoryFeatherFullPath = os.path.join(base_path, "..", "dataStore", "history", BLHistoryFeatherFileName)
     # complete districts (cases, deaths, recovered. incidence)
@@ -305,7 +229,7 @@ def update():
     #LKDiff["cD"] = dt.datetime.strftime(Datenstand, "%Y-%m-%d")
     BLDiff["cD"] = dt.datetime.strftime(Datenstand, "%Y-%m-%d")
     #LKDiffFullFeatherPath = os.path.join(base_path, "..", "dataStore", "history", "districts_cases_Diff.feather")
-    BLDiffFullFeatherPath = os.path.join(base_path, "..", "dataStore", "history", "states_cases_Diff.feather")
+    BLDiffFullFeatherPath = os.path.join(base_path, "..", "dataStore", "history", "state00_cases_Diff.feather")
     path = os.path.join(base_path, "..", "dataStore", "history")
     #if os.path.exists(LKDiffFullFeatherPath):
     #    LKoldDiff = ut.read_file(LKDiffFullFeatherPath)
@@ -321,6 +245,5 @@ def update():
         BLDiff.sort_values(by=["i", "m", "cD"], inplace=True)
         BLDiff.reset_index(inplace=True, drop=True)
     ut.write_file(BLDiff, BLDiffFullFeatherPath, compression="lz4")
-    ut.write_json(BLDiff, "states_cases_Diff.json", path)
-    os.remove(path=feather_path)
-    
+    ut.write_json(BLDiff, "state00_cases_Diff.json", path)
+  
