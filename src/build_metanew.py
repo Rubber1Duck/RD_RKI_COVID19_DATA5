@@ -22,6 +22,7 @@ def build_meta(datum):
   
   return new_meta
 
+start = dt.datetime.now()
 if len(sys.argv) == 1:
   # for debug put startdate here
   startDatum = "2020-04-08"
@@ -35,7 +36,8 @@ else:
   endDatum = sys.argv[2]
 endObject = dt.datetime.strptime(endDatum, '%Y-%m-%d')
 base_path = os.path.dirname(os.path.abspath(__file__))
-print("running from", startObject, "to", endObject)
+aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
+print(aktuelleZeit, ": running from", startObject, "to", endObject)
 for datumloop in pd.date_range(start=startObject, end=endObject).tolist():
   startTime = dt.datetime.now()
   datum = datumloop.strftime('%Y-%m-%d')
@@ -68,3 +70,5 @@ for datumloop in pd.date_range(start=startObject, end=endObject).tolist():
   aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
   print(aktuelleZeit, ": total time for date:",datum, "=>", endTime - startTime)
   print("****************************************************")
+end = dt.datetime.now()
+print(aktuelleZeit, "overall time for range", startObject, "to", endObject, "is =>", end-start)
