@@ -82,7 +82,7 @@ def read_file(fn):
 def calc_incidence_BL(df, unique_ID):
     Region_I = pd.DataFrame()
     for id in unique_ID:
-        RegionID = pd.DataFrame(df[df["IdBundesland"] == id].copy())
+        RegionID = df[df["IdBundesland"] == id].copy()
         RegionID.drop(["Bundesland", "deaths", "recovered"], inplace=True, axis=1)
         RegionID.reset_index(inplace=True, drop=True)
         indexes = RegionID.index.to_list()
@@ -91,16 +91,16 @@ def calc_incidence_BL(df, unique_ID):
                 RegionID.at[index, "cases7d"] = RegionID.iloc[:index + 1, 2].sum(axis=0)
             else:
                 RegionID.at[index, "cases7d"] = RegionID.iloc[index - 6:index + 1, 2].sum(axis=0)
-        RegionID["incidence7d"] = RegionID["cases7d"] / RegionID["Einwohner"] * 100000
         Region_I = pd.concat([Region_I, RegionID])
     Region_I.reset_index(inplace=True, drop=True)
+    Region_I["incidence7d"] = RegionID["cases7d"] / RegionID["Einwohner"] * 100000
     Region_I.drop(["Einwohner", "cases"], inplace=True, axis=1)
     return Region_I
 
 def calc_incidence_LK(df, unique_ID):
     Region_I = pd.DataFrame()
     for id in unique_ID:
-        RegionID = pd.DataFrame(df[df["IdLandkreis"] == id].copy())
+        RegionID = df[df["IdLandkreis"] == id].copy()
         RegionID.drop(["Landkreis", "deaths", "recovered"], inplace=True, axis=1)
         RegionID.reset_index(inplace=True, drop=True)
         indexes = RegionID.index.to_list()
@@ -109,9 +109,9 @@ def calc_incidence_LK(df, unique_ID):
                 RegionID.at[index, "cases7d"] = RegionID.iloc[:index + 1, 2].sum(axis=0)
             else:
                 RegionID.at[index, "cases7d"] = RegionID.iloc[index - 6:index + 1, 2].sum(axis=0)
-        RegionID["incidence7d"] = RegionID["cases7d"] / RegionID["Einwohner"] * 100000
         Region_I = pd.concat([Region_I, RegionID])
     Region_I.reset_index(inplace=True, drop=True)
+    Region_I["incidence7d"] = RegionID["cases7d"] / RegionID["Einwohner"] * 100000
     Region_I.drop(["Einwohner", "cases"], inplace=True, axis=1)
     return Region_I
 
