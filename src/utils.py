@@ -87,10 +87,12 @@ def calc_incidence_BL(df, unique_ID):
         RegionID.reset_index(inplace=True, drop=True)
         indexes = RegionID.index.to_list()
         for index in indexes:
-            if index < 6:
-                RegionID.at[index, "cases7d"] = RegionID.iloc[:index + 1, 2].sum(axis=0)
-            else:
-                RegionID.at[index, "cases7d"] = RegionID.iloc[index - 6:index + 1, 2].sum(axis=0)
+            cases7d = 0
+            for x in range(0, 7):
+                if (index - x) < 0:
+                    continue
+                cases7d += RegionID.at[index - x, "cases"]
+            RegionID.at[index, "cases7d"] = cases7d
         RegionID["incidence7d"] = RegionID["cases7d"] / RegionID["Einwohner"] * 100000
         Region_I = pd.concat([Region_I, RegionID])
     Region_I.reset_index(inplace=True, drop=True)
@@ -105,10 +107,12 @@ def calc_incidence_LK(df, unique_ID):
         RegionID.reset_index(inplace=True, drop=True)
         indexes = RegionID.index.to_list()
         for index in indexes:
-            if index < 6:
-                RegionID.at[index, "cases7d"] = RegionID.iloc[:index + 1, 2].sum(axis=0)
-            else:
-                RegionID.at[index, "cases7d"] = RegionID.iloc[index - 6:index + 1, 2].sum(axis=0)
+            cases7d = 0
+            for x in range(0, 7):
+                if (index - x) < 0:
+                    continue
+                cases7d += RegionID.at[index - x, "cases"]
+            RegionID.at[index, "cases7d"] = cases7d
         RegionID["incidence7d"] = RegionID["cases7d"] / RegionID["Einwohner"] * 100000
         Region_I = pd.concat([Region_I, RegionID])
     Region_I.reset_index(inplace=True, drop=True)
