@@ -169,81 +169,76 @@ def update():
     del BL_ID
     del BL_Dates
     gc.collect()
-    #LK["Meldedatum"] = LK["Meldedatum"].astype(str)
-    #LK.insert(loc=7, column="cases7d", value=0)
-    #LK.insert(loc=8, column="incidence7d", value=0.0)
-    #aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
-    #print(aktuelleZeit, ":   |-calculating LK incidence ...")
-    #unique_LKID = LK_ID.IdLandkreis.unique()
-    #LK_I = ut.calc_incidence_LK(df=LK, unique_ID=unique_LKID)
-    #LK["cases7d"] = LK_I["cases7d"]
-    #LK["incidence7d"] = LK_I["incidence7d"].round(5)
-    #LK.drop(["Einwohner"], inplace=True, axis=1)
-    #LK_I = pd.DataFrame()
-    #LKID = pd.DataFrame()
-    #LK_ID = pd.DataFrame()
-    #LK_Dates = pd.DataFrame()
-    #del LK_I
-    #del LKID
-    #del LK_ID
-    #del LK_Dates
-    #gc.collect()
+    LK["Meldedatum"] = LK["Meldedatum"].astype(str)
+    aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
+    print(aktuelleZeit, ":   |-calculating LK incidence ...")
+    unique_LKID = LK_ID.IdLandkreis.unique()
+    LK_I = ut.calc_incidence_LK(df=LK, unique_ID=unique_LKID)
+    LK = LK.merge(LK_I, how="left", left_on=["Meldedatum", "IdLandkreis"], right_on=["Meldedatum", "IdLandkreis"])
+    LK["incidence7d"] = LK["incidence7d"].round(5)
+    LK.drop(["Einwohner"], inplace=True, axis=1)
+    LK_I = pd.DataFrame()
+    LKID = pd.DataFrame()
+    LK_ID = pd.DataFrame()
+    LK_Dates = pd.DataFrame()
+    del LK_I
+    del LKID
+    del LK_ID
+    del LK_Dates
+    gc.collect()
     
     # store
     path = os.path.join(base_path, "..", "dataStore", "history")
     archivPath = os.path.join(base_path, "..", "archiv", "history")
-    #LKHistoryFeatherFileName = "districts_cases.feather"
-    BLHistoryFeatherFileName = "state00_cases.feather"
-    #LKHistoryFeatherFullPath = os.path.join(base_path, "..", "dataStore", "history", LKHistoryFeatherFileName)
+    LKHistoryFeatherFileName = "districts_cases.feather"
+    BLHistoryFeatherFileName = "states_cases.feather"
+    LKHistoryFeatherFullPath = os.path.join(base_path, "..", "dataStore", "history", LKHistoryFeatherFileName)
     BLHistoryFeatherFullPath = os.path.join(base_path, "..", "dataStore", "history", BLHistoryFeatherFileName)
     # complete districts (cases, deaths, recovered. incidence)
-    #ut.write_json(LK, "districts.json", path, oldDatenstandStr, archivPath)
+    ut.write_json(LK, "districts.json", path)
     # complete states (cases, deaths, recovered. incidence)
-    #ut.write_json(BL, "states.json", path, oldDatenstandStr, archivPath)
+    ut.write_json(BL, "states.json", path)
     # complete districts (cases, deaths, recovered. incidence) short
-    #LK.rename(columns={"IdLandkreis": "i", "Landkreis": "t", "Meldedatum": "m", "cases": "c", "deaths": "d", "recovered": "r", "cases7d": "c7", "incidence7d": "i7"}, inplace=True)
-    #ut.write_json(LK, "districts_new.json", path)
+    LK.rename(columns={"IdLandkreis": "i", "Landkreis": "t", "Meldedatum": "m", "cases": "c", "deaths": "d", "recovered": "r", "cases7d": "c7", "incidence7d": "i7"}, inplace=True)
+    ut.write_json(LK, "districts_new.json", path)
     # complete states (cases, deaths, recovered. incidence) short
     BL.rename(columns={"IdBundesland": "i", "Bundesland": "t", "Meldedatum": "m", "cases": "c", "deaths": "d", "recovered": "r", "cases7d": "c7", "incidence7d": "i7"}, inplace=True)
     ut.write_json(BL, "states_new.json", path)
     # calculate cases diff
     aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
     print(aktuelleZeit, ": calculating history difference")
-    #LK.drop(["t", "d", "r", "c7", "i7"], inplace=True, axis=1)
+    LK.drop(["t", "d", "r", "c7", "i7"], inplace=True, axis=1)
     BL.drop(["t", "d", "r", "c7", "i7"], inplace=True, axis=1)
-    BL00 = BL[BL["i"] == "00"].copy()
-    #if os.path.exists(LKHistoryFeatherFullPath):
-    #    oldLK = ut.read_file(fn=LKHistoryFeatherFullPath)
-    #ut.write_file(df=LK, fn=LKHistoryFeatherFullPath, compression="lz4")
+    if os.path.exists(LKHistoryFeatherFullPath):
+        oldLK = ut.read_file(fn=LKHistoryFeatherFullPath)
+    ut.write_file(df=LK, fn=LKHistoryFeatherFullPath, compression="lz4")
     if os.path.exists(BLHistoryFeatherFullPath):
         oldBL = ut.read_file(fn=BLHistoryFeatherFullPath)
-    ut.write_file(df=BL00, fn=BLHistoryFeatherFullPath, compression="lz4")
-    #try:
-    #    LKDiff = ut.get_different_rows(oldLK, LK)
-    #except:
-    #    LKDiff = LK.copy()
+    ut.write_file(df=BL, fn=BLHistoryFeatherFullPath, compression="lz4")
     try:
-        BLDiff = ut.get_different_rows(oldBL, BL00)
+        LKDiff = ut.get_different_rows(oldLK, LK)
     except:
-        BLDiff = BL00.copy()
-    #LKDiff["cD"] = dt.datetime.strftime(Datenstand, "%Y-%m-%d")
+        LKDiff = LK.copy()
+    try:
+        BLDiff = ut.get_different_rows(oldBL, BL)
+    except:
+        BLDiff = BL.copy()
+    LKDiff["cD"] = dt.datetime.strftime(Datenstand, "%Y-%m-%d")
     BLDiff["cD"] = dt.datetime.strftime(Datenstand, "%Y-%m-%d")
-    #LKDiffFullFeatherPath = os.path.join(base_path, "..", "dataStore", "history", "districts_cases_Diff.feather")
-    BLDiffFullFeatherPath = os.path.join(base_path, "..", "dataStore", "history", "state00_cases_Diff.feather")
+    LKDiffFullFeatherPath = os.path.join(base_path, "..", "dataStore", "history", "districts_cases_Diff.feather")
+    BLDiffFullFeatherPath = os.path.join(base_path, "..", "dataStore", "history", "states_cases_Diff.feather")
     path = os.path.join(base_path, "..", "dataStore", "history")
-    #if os.path.exists(LKDiffFullFeatherPath):
-    #    LKoldDiff = ut.read_file(LKDiffFullFeatherPath)
-    #    LKDiff = pd.concat([LKoldDiff, LKDiff])
-    #    LKDiff.sort_values(by=["i", "m", "cD"], inplace=True)
-    #    LKDiff.reset_index(inplace=True, drop=True)
-    #ut.write_file(LKDiff, LKDiffFullFeatherPath, compression="lz4")
-    #ut.write_json(LKDiff, "districts_cases_Diff.json", path)
-    ut.write_json(BLDiff, "state00_cases_Diff.json", path, oldDatenstandStr, archivPath)
+    if os.path.exists(LKDiffFullFeatherPath):
+        LKoldDiff = ut.read_file(LKDiffFullFeatherPath)
+        LKDiff = pd.concat([LKoldDiff, LKDiff])
+        LKDiff.sort_values(by=["i", "m", "cD"], inplace=True)
+        LKDiff.reset_index(inplace=True, drop=True)
+    ut.write_file(LKDiff, LKDiffFullFeatherPath, compression="lz4")
+    ut.write_json(LKDiff, "districts_cases_Diff.json", path)
     if os.path.exists(BLDiffFullFeatherPath):
         BLoldDiff = ut.read_file(BLDiffFullFeatherPath)
         BLDiff = pd.concat([BLoldDiff, BLDiff])
         BLDiff.sort_values(by=["i", "m", "cD"], inplace=True)
         BLDiff.reset_index(inplace=True, drop=True)
     ut.write_file(BLDiff, BLDiffFullFeatherPath, compression="lz4")
-    ut.write_json(BLDiff, "state00_cases_Diff.json", path)
-  
+    ut.write_json(BLDiff, "states_cases_Diff.json", path)
