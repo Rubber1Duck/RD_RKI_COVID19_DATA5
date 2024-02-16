@@ -226,7 +226,8 @@ def update():
     #LKDiff["cD"] = dt.datetime.strftime(Datenstand, "%Y-%m-%d")
     BLDiff["cD"] = dt.datetime.strftime(Datenstand, "%Y-%m-%d")
     #LKDiffFullFeatherPath = os.path.join(base_path, "..", "dataStore", "history", "districts_cases_Diff.feather")
-    BLDiffFullFeatherPath = os.path.join(base_path, "..", "dataStore", "history", "states_cases_Diff.feather")
+    BLDiffFullFeatherPathbyMd = os.path.join(base_path, "..", "dataStore", "history", "states_cases_Diff_by_Md.feather")
+    BLDiffFullFeatherPathbyCd = os.path.join(base_path, "..", "dataStore", "history", "states_cases_Diff_by_Cd.feather")
     path = os.path.join(base_path, "..", "dataStore", "history")
     #if os.path.exists(LKDiffFullFeatherPath):
     #    LKoldDiff = ut.read_file(LKDiffFullFeatherPath)
@@ -235,10 +236,17 @@ def update():
     #    LKDiff.reset_index(inplace=True, drop=True)
     #ut.write_file(LKDiff, LKDiffFullFeatherPath, compression="lz4")
     #ut.write_json(LKDiff, "districts_cases_Diff.json", path)
-    if os.path.exists(BLDiffFullFeatherPath):
-        BLoldDiff = ut.read_file(BLDiffFullFeatherPath)
+    if os.path.exists(BLDiffFullFeatherPathbyMd):
+        BLoldDiff = ut.read_file(BLDiffFullFeatherPathbyMd)
         BLDiff = pd.concat([BLoldDiff, BLDiff])
         BLDiff.sort_values(by=["i", "m", "cD"], inplace=True)
         BLDiff.reset_index(inplace=True, drop=True)
-    ut.write_file(BLDiff, BLDiffFullFeatherPath, compression="lz4")
-    ut.write_json(BLDiff, "states_cases_Diff.json", path)
+    ut.write_file(BLDiff, BLDiffFullFeatherPathbyMd, compression="lz4")
+    ut.write_json(BLDiff, "states_cases_Diff_by_Md.json", path)
+    if os.path.exists(BLDiffFullFeatherPathbyCd):
+        BLoldDiff = ut.read_file(BLDiffFullFeatherPathbyCd)
+        BLDiff = pd.concat([BLoldDiff, BLDiff])
+        BLDiff.sort_values(by=["cD", "i", "m"], inplace=True)
+        BLDiff.reset_index(inplace=True, drop=True)
+    ut.write_file(BLDiff, BLDiffFullFeatherPathbyCd, compression="lz4")
+    ut.write_json(BLDiff, "states_cases_Diff_by_Cd.json", path)
