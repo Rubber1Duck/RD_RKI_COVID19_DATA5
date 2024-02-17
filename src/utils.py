@@ -93,10 +93,11 @@ def calc_incidence_BL(df, unique_ID):
                     continue
                 cases7d += RegionID.at[index - x, "cases"]
             RegionID.at[index, "cases7d"] = cases7d
-        RegionID["incidence7d"] = RegionID["cases7d"] / RegionID["Einwohner"] * 100000
         Region_I = pd.concat([Region_I, RegionID])
     Region_I.reset_index(inplace=True, drop=True)
+    Region_I["incidence7d"] = Region_I["cases7d"] / Region_I["Einwohner"] * 100000
     Region_I.drop(["Einwohner", "cases"], inplace=True, axis=1)
+    Region_I["cases7d"] = Region_I["cases7d"].astype(int)
     return Region_I
 
 def calc_incidence_LK(df, unique_ID):
