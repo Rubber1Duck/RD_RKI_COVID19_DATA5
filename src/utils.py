@@ -79,46 +79,35 @@ def read_file(fn):
     return df
 
 
-def calc_incidence_BL(df, unique_ID):
-    Region_I = pd.DataFrame()
-    for id in unique_ID:
-        RegionID = pd.DataFrame(df[df["IdBundesland"] == id].copy())
-        RegionID.drop(["Bundesland", "deaths", "recovered"], inplace=True, axis=1)
-        RegionID.reset_index(inplace=True, drop=True)
-        indexes = RegionID.index.to_list()
-        for index in indexes:
+def calc_incidence_BL(df, uniqueId):
+    for id in uniqueId:
+        idIndexes = df[df["IdBundesland"] == id].index.to_list()
+        for index in idIndexes:
+            indexPos = idIndexes.index(index)
             cases7d = 0
             for x in range(0, 7):
-                if (index - x) < 0:
+                if (indexPos - x) < 0:
                     continue
-                cases7d += RegionID.at[index - x, "cases"]
-            RegionID.at[index, "cases7d"] = cases7d
-        Region_I = pd.concat([Region_I, RegionID])
-    Region_I.reset_index(inplace=True, drop=True)
-    Region_I["incidence7d"] = Region_I["cases7d"] / Region_I["Einwohner"] * 100000
-    Region_I.drop(["Einwohner", "cases"], inplace=True, axis=1)
-    Region_I["cases7d"] = Region_I["cases7d"].astype(int)
-    return Region_I
+                cases7d += df.at[idIndexes[indexPos - x], "cases"]
+            df.at[index, "cases7d"] = cases7d
+            df.at[index, "incidence7d"] = (cases7d / df.at[index, "Einwohner"] * 100000).round(5)
+    df["cases7d"] = df["cases7d"].astype(int)
+    return
 
-def calc_incidence_LK(df, unique_ID):
-    Region_I = pd.DataFrame()
-    for id in unique_ID:
-        RegionID = pd.DataFrame(df[df["IdLandkreis"] == id].copy())
-        RegionID.drop(["Landkreis", "deaths", "recovered"], inplace=True, axis=1)
-        RegionID.reset_index(inplace=True, drop=True)
-        indexes = RegionID.index.to_list()
-        for index in indexes:
+def calc_incidence_LK(df, uniqueId):
+    for id in uniqueId:
+        idIndexes = df[df["IdLandkreis"] == id].index.to_list()
+        for index in idIndexes:
+            indexPos = idIndexes.index(index)
             cases7d = 0
             for x in range(0, 7):
-                if (index - x) < 0:
+                if (indexPos - x) < 0:
                     continue
-                cases7d += RegionID.at[index - x, "cases"]
-            RegionID.at[index, "cases7d"] = cases7d
-        RegionID["incidence7d"] = RegionID["cases7d"] / RegionID["Einwohner"] * 100000
-        Region_I = pd.concat([Region_I, RegionID])
-    Region_I.reset_index(inplace=True, drop=True)
-    Region_I.drop(["Einwohner", "cases"], inplace=True, axis=1)
-    return Region_I
+                cases7d += df.at[idIndexes[indexPos - x], "cases"]
+            df.at[index, "cases7d"] = cases7d
+            df.at[index, "incidence7d"] = (cases7d / df.at[index, "Einwohner"] * 100000).round(5)
+    df["cases7d"] = df["cases7d"].astype(int)
+    return
 
 def copy(source, destination):
    with open(source, 'rb') as file:
