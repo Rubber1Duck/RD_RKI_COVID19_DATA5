@@ -32,7 +32,7 @@ if __name__ == '__main__':
     startDatum = sys.argv[1]
   startObject = dt.datetime.strptime(startDatum, '%Y-%m-%d')
   if len(sys.argv) == 1:
-    endDatum = "2020-04-09"
+    endDatum = "2020-05-31"
   else:
     endDatum = sys.argv[2]
   endObject = dt.datetime.strptime(endDatum, '%Y-%m-%d')

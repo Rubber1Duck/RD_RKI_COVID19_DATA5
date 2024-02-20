@@ -180,7 +180,7 @@ def update():
     print(f"{aktuelleZeit} :   |-calculating LK incidence ... {LK.shape[0]} rows")
     unique_LKID = LK_ID.IdLandkreis.unique()
     t1 = time.time()
-    LK = LK.groupby(["IdLandkreis"], observed=True).apply_parallel(ut.calc_incidence_LK)
+    LK = LK.groupby(["IdLandkreis"], observed=True).apply(ut.calc_incidence_LK)
     #ut.calc_incidence_LK(df=LK, uniqueId=unique_LKID)
     t2 = time.time()
     aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
