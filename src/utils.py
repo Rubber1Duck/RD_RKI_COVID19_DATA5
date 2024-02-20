@@ -79,35 +79,35 @@ def read_file(fn):
     return df
 
 
-def calc_incidence_BL(df, uniqueId):
-    for id in uniqueId:
-        idIndexes = df[df["IdBundesland"] == id].index.to_list()
-        for index in idIndexes:
-            indexPos = idIndexes.index(index)
-            cases7d = 0
-            for x in range(0, 7):
-                if (indexPos - x) < 0:
-                    continue
-                cases7d += df.at[idIndexes[indexPos - x], "cases"]
-            df.at[index, "cases7d"] = cases7d
-            df.at[index, "incidence7d"] = (cases7d / df.at[index, "Einwohner"] * 100000).round(5)
+def calc_incidence_BL(df):
+    import pandas as pd
+    idIndexes = df.index.to_list()
+    for index in idIndexes:
+        indexPos = idIndexes.index(index)
+        cases7d = 0
+        for x in range(0, 7):
+            if (indexPos - x) < 0:
+                continue
+            cases7d += df.at[idIndexes[indexPos - x], "cases"]
+        df.at[index, "cases7d"] = cases7d
+        df.at[index, "incidence7d"] = (cases7d / df.at[index, "Einwohner"] * 100000).round(5)
     df["cases7d"] = df["cases7d"].astype(int)
-    return
+    return df
 
-def calc_incidence_LK(df, uniqueId):
-    for id in uniqueId:
-        idIndexes = df[df["IdLandkreis"] == id].index.to_list()
-        for index in idIndexes:
-            indexPos = idIndexes.index(index)
-            cases7d = 0
-            for x in range(0, 7):
-                if (indexPos - x) < 0:
-                    continue
-                cases7d += df.at[idIndexes[indexPos - x], "cases"]
-            df.at[index, "cases7d"] = cases7d
-            df.at[index, "incidence7d"] = (cases7d / df.at[index, "Einwohner"] * 100000).round(5)
+def calc_incidence_LK(df):
+    import pandas as pd
+    idIndexes = df.index.to_list()
+    for index in idIndexes:
+        indexPos = idIndexes.index(index)
+        cases7d = 0
+        for x in range(0, 7):
+            if (indexPos - x) < 0:
+                continue
+            cases7d += df.at[idIndexes[indexPos - x], "cases"]
+        df.at[index, "cases7d"] = cases7d
+        df.at[index, "incidence7d"] = (cases7d / df.at[index, "Einwohner"] * 100000).round(5)
     df["cases7d"] = df["cases7d"].astype(int)
-    return
+    return df
 
 def copy(source, destination):
    with open(source, 'rb') as file:
