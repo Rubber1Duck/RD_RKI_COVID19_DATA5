@@ -6,7 +6,7 @@ import json
 import utils as ut
 import gc
 import time
-from multiprocesspandas import applyparallel
+from multiprocess_pandas import applyparallel
 
 def update():
     base_path = os.path.dirname(os.path.abspath(__file__))
@@ -177,7 +177,7 @@ def update():
     aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
     print(f"{aktuelleZeit} :   |-calculating LK incidence ... {LK.shape[0]} rows")
     t1 = time.time()
-    LK = LK.groupby(["IdLandkreis"], observed=True).apply_parallel(ut.calc_incidence)
+    LK = LK.groupby(["IdLandkreis"], observed=True).apply_parallel(ut.calc_incidence, progressbar=False)
     t2 = time.time()
     aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
     print(f"{aktuelleZeit} :   |-Done in {round(t2-t1, 5)} sec. Thats {round(LKEstimateTime/(t2 - t1), 2)} times faster")
