@@ -164,10 +164,11 @@ def update():
     print(f"{aktuelleZeit} :   |-calculating BL incidence ... {BL.shape[0]} rows.")
     t1 = time.time()
     # multiprozessing BL incidence is slower! => normal apply
-    BL = BL.groupby(["IdBundesland"], observed=True).apply(ut.calc_incidence_BL) 
+    BL = BL.groupby(["IdBundesland"], observed=True).apply(ut.calc_incidence) 
     t2 = time.time()
     aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
-    LKEstimateTime = (t2-t1) * 411 / 17
+    LKuniqueIdsCount = pd.unique(LK["IdLandkreis"]).shape[0]
+    LKEstimateTime = (t2-t1) * LKuniqueIdsCount / 17
     print(f"{aktuelleZeit} :   |-Done in {round(t2-t1, 5)} sec. Estimate {round(LKEstimateTime, 5)} sec. for LK!")
     BL.reset_index(inplace=True, drop=True)
     BL.drop(["Einwohner"], inplace=True, axis=1)
@@ -176,7 +177,7 @@ def update():
     aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
     print(f"{aktuelleZeit} :   |-calculating LK incidence ... {LK.shape[0]} rows")
     t1 = time.time()
-    LK = LK.groupby(["IdLandkreis"], observed=True).apply_parallel(ut.calc_incidence_LK)
+    LK = LK.groupby(["IdLandkreis"], observed=True).apply_parallel(ut.calc_incidence)
     t2 = time.time()
     aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
     print(f"{aktuelleZeit} :   |-Done in {round(t2-t1, 5)} sec. Thats {round(LKEstimateTime/(t2 - t1), 2)} times faster")
