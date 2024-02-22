@@ -32,7 +32,7 @@ if __name__ == '__main__':
     startDatum = sys.argv[1]
   startObject = dt.datetime.strptime(startDatum, '%Y-%m-%d')
   if len(sys.argv) == 1:
-    endDatum = "2020-05-31"
+    endDatum = "2020-04-09"
   else:
     endDatum = sys.argv[2]
   endObject = dt.datetime.strptime(endDatum, '%Y-%m-%d')
@@ -56,14 +56,10 @@ if __name__ == '__main__':
     #aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
     #print(aktuelleZeit, ": Fallzahlen update")
     #f_update()
-    archivDate = datumloop.date() - dt.timedelta(days=1)
-    archiveDateStr = dt.datetime.strftime(archivDate, "%Y-%m-%d")
     meta_path = os.path.join(base_path, "..", "dataStore", "meta", "meta.json")
     meta_path = os.path.normpath(meta_path)
-    metaArchivPath = os.path.join(base_path, "..", "archiv", "meta", archiveDateStr + "_" + "meta.json")
-    metaArchivPath = os.path.normpath(metaArchivPath)
     if os.path.exists(meta_path):
-      os.rename(meta_path, metaArchivPath)
+      os.remove(meta_path)
     os.rename(metaNew_path, meta_path)
     #os.system("git add .")
     #os.system('git commit -m"update ' + datumversion + '"')
