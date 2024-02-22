@@ -184,9 +184,8 @@ def update():
     LK.reset_index(inplace=True, drop=True)
     LK.drop(["Einwohner"], inplace=True, axis=1)
         
-    # store
-    
-    changesPath = os.path.normpath(os.path.join(base_path, "..", "dataStore", "historychanges"))
+    # store all files not compressed! will be done later
+    changesPath = os.path.normpath(os.path.join(base_path, "..", "data", "historychanges"))
     LKFeatherFile = "districts.feather"
     BLFeatherFile = "states.feather"
     LKcasesChangesFeatherFull = os.path.join(changesPath, "cases", LKFeatherFile)
