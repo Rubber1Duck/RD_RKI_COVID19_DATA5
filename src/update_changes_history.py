@@ -186,7 +186,7 @@ def update():
         
     # store
     
-    changesPath = os.path.normpath(os.path.join(base_path, "..", "datastore", "historychanges"))
+    changesPath = os.path.normpath(os.path.join(base_path, "..", "dataStore", "historychanges"))
     LKFeatherFile = "districts.feather"
     BLFeatherFile = "states.feather"
     LKcasesChangesFeatherFull = os.path.join(changesPath, "cases", LKFeatherFile)
