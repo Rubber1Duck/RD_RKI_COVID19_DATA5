@@ -163,8 +163,11 @@ def update():
     aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
     print(f"{aktuelleZeit} :   |-calculating BL incidence ... {BL.shape[0]} rows.")
     t1 = time.time()
-    # multiprozessing BL incidence is slower! => normal apply
-    BL = BL.groupby(["IdBundesland"], observed=True).apply(ut.calc_incidence) 
+    if BL.shape[0] > 13000:
+        BL = BL.groupby(["IdBundesland"], observed=True).apply_parallel(ut.calc_incidence, progressbar=False)
+    else:
+        BL["ID"] = BL["IdBundesland"]
+        BL = BL.groupby(["ID"]).apply(ut.calc_incidence, include_groups=False)
     t2 = time.time()
     aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
     LKuniqueIdsCount = pd.unique(LK["IdLandkreis"]).shape[0]
