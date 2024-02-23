@@ -1,3 +1,5 @@
 # cases
 
-Enthält die accumulierten Fallzahlen sowie die neuen Fälle (cases, deaths, recovered, newCases, newDeaths, newRecovered)
+Quellenvermerk:
+
+- Robert Koch-Institut (RKI), [dl-de/by-2-0](https://www.govdata.de/dl-de/by-2-0)
