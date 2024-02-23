@@ -163,7 +163,7 @@ def update():
     aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
     
     print(f"{aktuelleZeit} :   |-calculating BL incidence with single thread... {BL.shape[0]} rows.")
-    BLS = BL.copy
+    BLS = BL.copy()
     BLS["ID"] = BLS["IdBundesland"]
     t1 = time.time()
     BLS = BLS.groupby(["ID"]).apply(ut.calc_incidence, include_groups=False)
