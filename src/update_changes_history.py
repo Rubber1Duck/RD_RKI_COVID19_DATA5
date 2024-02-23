@@ -175,7 +175,7 @@ def update():
         
     LK["Meldedatum"] = LK["Meldedatum"].astype(str)
     aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
-    print(f"{aktuelleZeit} :   |-calculating LK incidence ... {LK.shape[0]} rows")
+    print(f"{aktuelleZeit} :   |-calculating LK incidence with {os.cpu_count()} processes... {LK.shape[0]} rows")
     t1 = time.time()
     LK = LK.groupby(["IdLandkreis"], observed=True).apply_parallel(ut.calc_incidence, progressbar=False)
     t2 = time.time()
