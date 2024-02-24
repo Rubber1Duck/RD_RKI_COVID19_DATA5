@@ -170,16 +170,16 @@ def update():
     t2 = time.time()
     singleTime = t2 - t1
     aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
-    LKuniqueIdsCount = LK.shape[0]
+    LKuniqueIdsCount = pd.unique(LK["IdLandkreis"]).shape[0]
     LKEstimateTime = singleTime * LKuniqueIdsCount / 17
     print(f"{aktuelleZeit} :   |-Done in {round(singleTime, 5)} sec. Estimate {round(LKEstimateTime, 5)} sec. for LK!")
     print(f"{aktuelleZeit} :   |-calculating BL incidence with 4 Processes... {BL.shape[0]} rows.")
     t1 = time.time()
     BL = BL.groupby(["IdBundesland"], observed=True).apply_parallel(ut.calc_incidence, progressbar=False)
     t2 = time.time()
+    multiTime = t2 - t1
     aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
-    LKEstimateTime = (t2 - t1) * LKuniqueIdsCount / 17
-    print(f"{aktuelleZeit} :   |-Done in {round(t2 - t1, 5)} sec. {round(singleTime / (t2 - t1), 5)} times faster as single thread.")
+    print(f"{aktuelleZeit} :   |-Done in {round(t2 - t1, 5)} sec. {round(singleTime / multiTime, 5)} times faster as single thread.")
     BL.reset_index(inplace=True, drop=True)
     BL.drop(["Einwohner"], inplace=True, axis=1)
         
