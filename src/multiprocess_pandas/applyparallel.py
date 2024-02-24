@@ -10,7 +10,7 @@ This file must be imported as a module and it attached following functions to pa
 """
 
 import pandas as pd
-from multiprocessing import Pool
+from multiprocess import Pool
 import functools
 from os import cpu_count
 from tqdm import tqdm
