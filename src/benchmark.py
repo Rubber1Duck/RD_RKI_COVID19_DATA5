@@ -168,17 +168,18 @@ def update():
     t1 = time.time()
     BLS = BLS.groupby(["ID"]).apply(ut.calc_incidence, include_groups=False)
     t2 = time.time()
+    singleTime = t2 - t1
     aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
-    LKuniqueIdsCount = pd.unique(LK["IdLandkreis"]).shape[0]
-    LKEstimateTime = (t2 - t1) * LKuniqueIdsCount / 17
-    print(f"{aktuelleZeit} :   |-Done in {round(t2 - t1, 5)} sec. Estimate {round(LKEstimateTime, 5)} sec. for LK!")
+    LKuniqueIdsCount = LK.shape[0]
+    LKEstimateTime = singleTime * LKuniqueIdsCount / 17
+    print(f"{aktuelleZeit} :   |-Done in {round(singleTime, 5)} sec. Estimate {round(LKEstimateTime, 5)} sec. for LK!")
     print(f"{aktuelleZeit} :   |-calculating BL incidence with 4 Processes... {BL.shape[0]} rows.")
     t1 = time.time()
     BL = BL.groupby(["IdBundesland"], observed=True).apply_parallel(ut.calc_incidence, progressbar=False)
     t2 = time.time()
     aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
     LKEstimateTime = (t2 - t1) * LKuniqueIdsCount / 17
-    print(f"{aktuelleZeit} :   |-Done in {round(t2 - t1, 5)} sec. Estimate {round(LKEstimateTime, 5)} sec. for LK!")
+    print(f"{aktuelleZeit} :   |-Done in {round(t2 - t1, 5)} sec. {round(singleTime / (t2 - t1), 5)} times faster as single thread.")
     BL.reset_index(inplace=True, drop=True)
     BL.drop(["Einwohner"], inplace=True, axis=1)
         
@@ -189,7 +190,7 @@ def update():
     LK = LK.groupby(["IdLandkreis"], observed=True).apply_parallel(ut.calc_incidence, progressbar=False)
     t2 = time.time()
     aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
-    print(f"{aktuelleZeit} :   |-Done in {round(t2-t1, 5)} sec. Thats {round(LKEstimateTime/(t2 - t1), 2)} times faster")
+    print(f"{aktuelleZeit} :   |-Done in {round(t2-t1, 5)} sec. Thats {round(LKEstimateTime/(t2 - t1), 2)} times faster as single thread estimated!")
     LK.reset_index(inplace=True, drop=True)
     LK.drop(["Einwohner"], inplace=True, axis=1)
 
