@@ -161,29 +161,25 @@ def update():
     
     BL["Meldedatum"] = BL["Meldedatum"].astype(str)
     aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
-    print(f"{aktuelleZeit} :   |-calculating BL incidence ... {BL.shape[0]} rows.")
+    print(f"{aktuelleZeit} :   |-calculating BL incidence with {os.cpu_count()} processes... {BL.shape[0]} rows.")
     t1 = time.time()
-    if BL.shape[0] > 13000:
-        BL = BL.groupby(["IdBundesland"], observed=True).apply_parallel(ut.calc_incidence, progressbar=False)
-    else:
-        BL["ID"] = BL["IdBundesland"]
-        BL = BL.groupby(["ID"]).apply(ut.calc_incidence, include_groups=False)
+    BL = BL.groupby(["IdBundesland"], observed=True).apply_parallel(ut.calc_incidence, progressbar=False)
     t2 = time.time()
     aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
     LKuniqueIdsCount = pd.unique(LK["IdLandkreis"]).shape[0]
-    LKEstimateTime = (t2-t1) * LKuniqueIdsCount / 17
-    print(f"{aktuelleZeit} :   |-Done in {round(t2-t1, 5)} sec. Estimate {round(LKEstimateTime, 5)} sec. for LK!")
+    LKEstimateTime = (t2 - t1) * LKuniqueIdsCount / 17
+    print(f"{aktuelleZeit} :   |-Done in {round(t2 - t1, 5)} sec. Estimate {round(LKEstimateTime, 5)} sec. for LK!")
     BL.reset_index(inplace=True, drop=True)
     BL.drop(["Einwohner"], inplace=True, axis=1)
         
     LK["Meldedatum"] = LK["Meldedatum"].astype(str)
     aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
-    print(f"{aktuelleZeit} :   |-calculating LK incidence with {os.cpu_count()} processes... {LK.shape[0]} rows")
+    print(f"{aktuelleZeit} :   |-calculating LK incidence with {os.cpu_count()} processes... {LK.shape[0]} rows.")
     t1 = time.time()
     LK = LK.groupby(["IdLandkreis"], observed=True).apply_parallel(ut.calc_incidence, progressbar=False)
     t2 = time.time()
     aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
-    print(f"{aktuelleZeit} :   |-Done in {round(t2-t1, 5)} sec. Thats {round(LKEstimateTime/(t2 - t1), 2)} times faster")
+    print(f"{aktuelleZeit} :   |-Done in {round(t2-t1, 5)} sec. Thats {round(LKEstimateTime/(t2 - t1), 2)} times faster than estimated")
     LK.reset_index(inplace=True, drop=True)
     LK.drop(["Einwohner"], inplace=True, axis=1)
         
