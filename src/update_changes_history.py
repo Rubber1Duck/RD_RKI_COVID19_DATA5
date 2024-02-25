@@ -179,6 +179,7 @@ def update():
     LK.drop(["Einwohner"], inplace=True, axis=1)
         
     # store all files not compressed! will be done later
+    filesToConvert = []
     historyPath = os.path.normpath(os.path.join(base_path, "..", "dataStore", "history"))
     LKFeatherFile = "districts.feather"
     BLFeatherFile = "states.feather"
@@ -237,38 +238,39 @@ def update():
     if os.path.exists(LKcasesFeatherFull):
         oldLKcases = ut.read_file(LKcasesFeatherFull)
     ut.write_file(LKcases, LKcasesFeatherFull, compression="lz4")
-    ut.write_json(LKcases, "districts.json", os.path.join(historyPath, "cases"))
+    filesToConvert.append((LKcasesFeatherFull, "districts.json", os.path.join(historyPath, "cases")))
     if os.path.exists(LKdeathsFeatherFull):
         oldLKdeaths = ut.read_file(LKdeathsFeatherFull)
     ut.write_file(LKdeaths, LKdeathsFeatherFull, compression="lz4")
-    ut.write_json(LKdeaths, "districts.json", os.path.join(historyPath, "deaths"))
+    filesToConvert.append((LKdeathsFeatherFull, "districts.json", os.path.join(historyPath, "deaths")))
     if os.path.exists(LKrecoveredFeatherFull):
         oldLKrecovered = ut.read_file(LKrecoveredFeatherFull)
     ut.write_file(LKrecovered, LKrecoveredFeatherFull, compression="lz4")
-    ut.write_json(LKrecovered, "districts.json", os.path.join(historyPath, "recovered"))
+    filesToConvert.append((LKrecoveredFeatherFull, "districts.json", os.path.join(historyPath, "recovered")))
     if os.path.exists(LKincidenceFeatherFull):
         oldLKincidence = ut.read_file(LKincidenceFeatherFull)
     ut.write_file(LKincidence, LKincidenceFeatherFull, compression="lz4")
-    ut.write_json(LKincidence, "districts.json", os.path.join(historyPath, "incidence"))
+    filesToConvert.append((LKincidenceFeatherFull, "districts.json", os.path.join(historyPath, "incidence")))
+    
     
     # read oldBL(cases, deaths, recovered, incidence) if old file exist
     # write new data
     if os.path.exists(BLcasesFeatherFull):
         oldBLcases = ut.read_file(BLcasesFeatherFull)
     ut.write_file(BLcases, BLcasesFeatherFull, compression="lz4")
-    ut.write_json(BLcases, "states.json", os.path.join(historyPath, "cases"))
+    filesToConvert.append((BLcasesFeatherFull, "states.json", os.path.join(historyPath, "cases")))
     if os.path.exists(BLdeathsFeatherFull):
         oldBLdeaths = ut.read_file(BLdeathsFeatherFull)
     ut.write_file(BLdeaths, BLdeathsFeatherFull, compression="lz4")
-    ut.write_json(BLdeaths, "states.json", os.path.join(historyPath, "deaths"))
+    filesToConvert.append((BLdeathsFeatherFull, "states.json", os.path.join(historyPath, "deaths")))
     if os.path.exists(BLrecoveredFeatherFull):
         oldBLrecovered = ut.read_file(BLrecoveredFeatherFull)
     ut.write_file(BLrecovered, BLrecoveredFeatherFull, compression="lz4")
-    ut.write_json(BLrecovered, "states.json", os.path.join(historyPath, "recovered"))
+    filesToConvert.append((BLrecoveredFeatherFull, "states.json", os.path.join(historyPath, "recovered")))
     if os.path.exists(BLincidenceFeatherFull):
         oldBLincidence = ut.read_file(BLincidenceFeatherFull)
     ut.write_file(BLincidence, BLincidenceFeatherFull, compression="lz4")
-    ut.write_json(BLincidence, "states.json", os.path.join(historyPath, "incidence"))
+    filesToConvert.append((BLincidenceFeatherFull, "states.json", os.path.join(historyPath, "incidence")))
 
     # calculate diff data
     aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
@@ -339,7 +341,7 @@ def update():
     LKDiffCases.sort_values(by=["i", "m", "cD"], inplace=True)
     LKDiffCases.reset_index(inplace=True, drop=True)
     ut.write_file(LKDiffCases, LKDiffCasesFeatherFull, compression="lz4")
-    ut.write_json(LKDiffCases, "districts_Diff.json", path)
+    filesToConvert.append((LKDiffCasesFeatherFull, "districts_Diff.json", path))
     
     path = os.path.join(changesPath, "deaths")
     if os.path.exists(LKDiffDeathsFeatherFull):
@@ -349,7 +351,7 @@ def update():
     LKDiffDeaths.sort_values(by=["i", "m", "cD"], inplace=True)
     LKDiffDeaths.reset_index(inplace=True, drop=True)
     ut.write_file(LKDiffDeaths, LKDiffDeathsFeatherFull, compression="lz4")
-    ut.write_json(LKDiffDeaths, "districts_Diff.json", path)
+    filesToConvert.append((LKDiffDeathsFeatherFull, "districts_Diff.json", path))
     
     path = os.path.join(changesPath, "recovered")
     if os.path.exists(LKDiffRecoveredFeatherFull):
@@ -359,7 +361,7 @@ def update():
     LKDiffRecovered.sort_values(by=["i", "m", "cD"], inplace=True)
     LKDiffRecovered.reset_index(inplace=True, drop=True)
     ut.write_file(LKDiffRecovered, LKDiffRecoveredFeatherFull, compression="lz4")
-    ut.write_json(LKDiffRecovered, "districts_Diff.json", path)
+    filesToConvert.append((LKDiffRecoveredFeatherFull, "districts_Diff.json", path))
     
     path = os.path.join(changesPath, "incidence")
     if os.path.exists(LKDiffIncidenceFeatherFull):
@@ -369,7 +371,7 @@ def update():
     LKDiffIncidence.sort_values(by=["i", "m", "cD"], inplace=True)
     LKDiffIncidence.reset_index(inplace=True, drop=True)
     ut.write_file(LKDiffIncidence, LKDiffIncidenceFeatherFull, compression="lz4")
-    ut.write_json(LKDiffIncidence, "districts_Diff.json", path)
+    filesToConvert.append((LKDiffIncidenceFeatherFull, "districts_Diff.json", path))
 
     path = os.path.normpath(os.path.join(base_path, "..", "dataStore", "historychanges", "cases"))
     if os.path.exists(BLDiffCasesFeatherFull):
@@ -379,7 +381,7 @@ def update():
     BLDiffCases.sort_values(by=["i", "m", "cD"], inplace=True)
     BLDiffCases.reset_index(inplace=True, drop=True)
     ut.write_file(BLDiffCases, BLDiffCasesFeatherFull, compression="lz4")
-    ut.write_json(BLDiffCases, "states_Diff.json", path)
+    filesToConvert.append((BLDiffCasesFeatherFull, "states_Diff.json", path))
     
     path = os.path.normpath(os.path.join(base_path, "..", "dataStore", "historychanges", "deaths"))
     if os.path.exists(BLDiffDeathsFeatherFull):
@@ -389,7 +391,7 @@ def update():
     BLDiffDeaths.sort_values(by=["i", "m", "cD"], inplace=True)
     BLDiffDeaths.reset_index(inplace=True, drop=True)
     ut.write_file(BLDiffDeaths, BLDiffDeathsFeatherFull, compression="lz4")
-    ut.write_json(BLDiffDeaths, "states_Diff.json", path)
+    filesToConvert.append((BLDiffDeathsFeatherFull, "states_Diff.json", path))
     
     path = os.path.normpath(os.path.join(base_path, "..", "dataStore", "historychanges", "recovered"))
     if os.path.exists(BLDiffRecoveredFeatherFull):
@@ -399,7 +401,7 @@ def update():
     BLDiffRecovered.sort_values(by=["i", "m", "cD"], inplace=True)
     BLDiffRecovered.reset_index(inplace=True, drop=True)
     ut.write_file(BLDiffRecovered, BLDiffRecoveredFeatherFull, compression="lz4")
-    ut.write_json(BLDiffRecovered, "states_Diff.json", path)
+    filesToConvert.append((BLDiffRecoveredFeatherFull, "states_Diff.json", path))
     
     path = os.path.normpath(os.path.join(base_path, "..", "dataStore", "historychanges", "incidence"))
     if os.path.exists(BLDiffIncidenceFeatherFull):
@@ -409,4 +411,5 @@ def update():
     BLDiffIncidence.sort_values(by=["i", "m", "cD"], inplace=True)
     BLDiffIncidence.reset_index(inplace=True, drop=True)
     ut.write_file(BLDiffIncidence, BLDiffIncidenceFeatherFull, compression="lz4")
-    ut.write_json(BLDiffIncidence, "states_Diff.json", path)
+    filesToConvert.append((BLDiffIncidenceFeatherFull, "states_Diff.json", path))
+    return filesToConvert

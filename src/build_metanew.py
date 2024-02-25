@@ -2,6 +2,8 @@ import os, json, sys
 import datetime as dt
 import pandas as pd
 from update_changes_history import update
+import time
+import utils as ut
 
 def build_meta(datum):
   base_path = os.path.dirname(os.path.abspath(__file__))
@@ -38,12 +40,12 @@ if __name__ == '__main__':
   endObject = dt.datetime.strptime(endDatum, '%Y-%m-%d')
   base_path = os.path.dirname(os.path.abspath(__file__))
   aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
-  print(aktuelleZeit, ": running from", startObject, "to", endObject)
+  print(f"{aktuelleZeit} : running from {startObject} to {endObject}")
   for datumloop in pd.date_range(start=startObject, end=endObject).tolist():
     startTime = dt.datetime.now()
     datum = datumloop.strftime('%Y-%m-%d')
     aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
-    print (aktuelleZeit, ": running on", datum)
+    print (f"{aktuelleZeit} : running on {datum}")
     new_meta = build_meta(datum)
     metaNew_path = os.path.join(base_path, "..", "dataStore", "meta", "meta_new.json")
     metaNew_path = os.path.normpath(metaNew_path)
@@ -52,7 +54,7 @@ if __name__ == '__main__':
     versionsplit = datum.split("-")
     datumversion = versionsplit[0] + versionsplit[1] + versionsplit[2]
     version = "v1.9." + datumversion
-    update()
+    filesToConvert = update()
     #aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
     #print(aktuelleZeit, ": Fallzahlen update")
     #f_update()
@@ -65,7 +67,19 @@ if __name__ == '__main__':
     #os.system('git commit -m"update ' + datumversion + '"')
     endTime = dt.datetime.now()
     aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
-    print(aktuelleZeit, ": total time for date:",datum, "=>", endTime - startTime)
+    print(f"{aktuelleZeit} : total time for date: {datum} => {endTime - startTime}")
     print("****************************************************")
+  print(f"convert all final feather files to json files, and write to disc")
+  t1 = time.time()
+  for featherfile, filename, path in filesToConvert:
+    aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
+    print(f"{aktuelleZeit} : read  {featherfile}")
+    df = ut.read_file(featherfile)
+    aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
+    print(f"{aktuelleZeit} : write {os.path.join(path, filename)}")
+    ut.write_json(df, filename, path)
+  t2 = time.time()
+  aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
+  print(f"{aktuelleZeit} : done, all files written in {round(t2 - t1, 5)} secs")
   end = dt.datetime.now()
-  print(aktuelleZeit, "overall time for range", startObject, "to", endObject, "is =>", end-start)
+  print(f"{aktuelleZeit} : overall time for range {startObject} to {endObject} is => {end - start}")
