@@ -278,8 +278,13 @@ def update():
     changesPath = os.path.normpath(os.path.join(base_path, "..", "dataStore", "historychanges"))
     try:
         LKDiffCases = ut.get_different_rows(oldLKcases, LKcases)
+        LKDiffCases.set_index(["i", "m"], inplace=True, drop=False)
+        oldLKcases.set_index(["i","m"], inplace=True, drop=False)
+        LKDiffCases["dc"] = LKDiffCases["c"] - oldLKcases["c"]
+        LKDiffCases["dc"] = LKDiffCases["dc"].fillna(LKDiffCases["c"])
     except:
         LKDiffCases = LKcases.copy()
+        LKDiffCases["dc"] = LKDiffCases["c"]
     try:
         LKDiffDeaths = ut.get_different_rows(oldLKdeaths, LKdeaths)
     except:
@@ -295,8 +300,13 @@ def update():
 
     try:
         BLDiffCases = ut.get_different_rows(oldBLcases, BLcases)
+        BLDiffCases.set_index(["i", "m"], inplace=True, drop=False)
+        oldBLcases.set_index(["i","m"], inplace=True, drop=False)
+        BLDiffCases["dc"] = BLDiffCases["c"] - oldBLcases["c"]
+        BLDiffCases["dc"] = BLDiffCases["dc"].fillna(BLDiffCases["c"])
     except:
         BLDiffCases = BLcases.copy()
+        BLDiffCases["dc"] = BLDiffCases["c"]
     try:
         BLDiffDeaths = ut.get_different_rows(oldBLdeaths, BLdeaths)
     except:
@@ -338,6 +348,7 @@ def update():
         LKoldDiffCases = ut.read_file(LKDiffCasesFeatherFull)
         LKoldDiffCases = LKoldDiffCases[LKoldDiffCases["cD"] != ChangeDateStr]
         LKDiffCases = pd.concat([LKoldDiffCases, LKDiffCases])
+    LKDiffCases["dc"] = LKDiffCases["dc"].astype(int)
     LKDiffCases.sort_values(by=["i", "m", "cD"], inplace=True)
     LKDiffCases.reset_index(inplace=True, drop=True)
     ut.write_file(LKDiffCases, LKDiffCasesFeatherFull, compression="lz4")
@@ -378,6 +389,7 @@ def update():
         BLoldDiffCases = ut.read_file(BLDiffCasesFeatherFull)
         BLoldDiffCases = BLoldDiffCases[BLoldDiffCases["cD"] != ChangeDateStr]
         BLDiffCases = pd.concat([BLoldDiffCases, BLDiffCases])
+    BLDiffCases["dc"] = BLDiffCases["dc"].astype(int)
     BLDiffCases.sort_values(by=["i", "m", "cD"], inplace=True)
     BLDiffCases.reset_index(inplace=True, drop=True)
     ut.write_file(BLDiffCases, BLDiffCasesFeatherFull, compression="lz4")
