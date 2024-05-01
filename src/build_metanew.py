@@ -12,8 +12,9 @@ def build_meta(datum):
   source_path = os.path.join(base_path, "..", "..", "RKIData", "feather", filename)
   source_path = os.path.normpath(source_path)
   date_time = dt.datetime.strptime(datum, "%Y-%m-%d")
-  unix_timestamp = int(dt.datetime.timestamp(date_time)*1000)
-  
+  date_time_floored = dt.datetime.combine(date_time.date(), date_time.time().min).replace(tzinfo=dt.timezone.utc)
+  unix_timestamp = int(dt.datetime.timestamp(date_time_floored)*1000)
+    
   new_meta = {
     "publication_date": datum,
     "version": datum,
@@ -27,17 +28,19 @@ def build_meta(datum):
 if __name__ == '__main__':
   start = dt.datetime.now()
   if len(sys.argv) == 1:
-    # for debug put startdate here
-    startDatum = "2020-04-08"
-  else:
-    # for debug put enddate here
+    startDatum = dt.datetime.strftime(start.date(), "%Y-%m-%d")
+    endDatum = dt.datetime.strftime(start.date(), "%Y-%m-%d")
+  elif len(sys.argv) == 2:
     startDatum = sys.argv[1]
-  startObject = dt.datetime.strptime(startDatum, '%Y-%m-%d')
-  if len(sys.argv) == 1:
-    endDatum = "2020-04-09"
-  else:
+    endDatum = sys.argv[1]
+  elif len(sys.argv) == 3:
+    startDatum = sys.argv[1]
     endDatum = sys.argv[2]
+  elif len(sys.argv) > 3:
+    raise ValueError('not more than 2 arguments are allowed')
+  startObject = dt.datetime.strptime(startDatum, '%Y-%m-%d')
   endObject = dt.datetime.strptime(endDatum, '%Y-%m-%d')
+  
   base_path = os.path.dirname(os.path.abspath(__file__))
   aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
   print(f"{aktuelleZeit} : running from {startObject} to {endObject}")
