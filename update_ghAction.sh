@@ -24,7 +24,6 @@ echo "$DATE2 : Start update with actual data (last modified: $lastModified)"
 # download static 7zip
 DATE2=$(date '+%Y-%m-%dT%H:%M:%SZ')
 echo "$DATE2 : download static 7zip"
-cd ../
 VERSION7ZIP="2301"
 ./get7Zip.sh ${VERSION7ZIP}
 
@@ -35,7 +34,7 @@ echo "$DATE2 : extract all data"
 
 # Print message 
 DATE2=$(date '+%Y-%m-%dT%H:%M:%SZ')
-echo "$DATE2 : executing python build_metanew.py"
+echo "$DATE2 : executing python build_metanew.py $DATE"
 
 python ./src/build_metanew.py $DATE
 
