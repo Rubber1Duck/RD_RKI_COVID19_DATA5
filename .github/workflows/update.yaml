@@ -1,0 +1,46 @@
+name: Update
+on:
+  workflow_dispatch:
+jobs:
+  updateData:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -l {0}
+        working-directory: ./.github/workflows
+    steps:
+      - uses: actions/checkout@master
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-activate-base: false
+          activate-environment: covid
+          python-version: 3.11
+          miniconda-version: "latest"
+          channels: conda-forge,defaults
+      - name: Install requirements
+        run: pip install -r ./requirements.txt
+        working-directory: ./
+      - name: update
+        id: update
+        run: ./update_ghAction.sh
+        continue-on-error: true
+        working-directory: ./
+        timeout-minutes: 70
+      - name: Commit files
+        if: steps.update.outcome == 'success'
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add ':/*.csv'
+          git add ':/*.json'
+          git add ':/*.feather'
+          git add ':/*.xz'
+          git status -s
+          git commit -m "update on $(date '+%Y-%m-%dT%H:%M:%SZ')"
+      - name: Push changes
+        if: steps.update.outcome == 'success'
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          force: true
+  

@@ -2,5 +2,5 @@ $files=Get-ChildItem -path .\dataStore\ -filter *.feather.xz -Recurse | ForEach-
 foreach($file in $files) {
   $filePath = Split-Path $file -Parent
   $filePath = $filePath+'\'
-  C:\Programme\7-Zip\7z.exe e -o"$filePath" "$file"
+  C:\Programme\7-Zip\7z.exe e -bso0 -bsp0 -o"$filePath" "$file"
 }

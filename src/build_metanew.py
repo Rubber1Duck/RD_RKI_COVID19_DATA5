@@ -1,4 +1,4 @@
-import os, json, sys
+import os, json, sys, requests
 import datetime as dt
 import pandas as pd
 from update_changes_history import update
@@ -6,21 +6,20 @@ import time
 import utils as ut
 
 def build_meta(datum):
-  base_path = os.path.dirname(os.path.abspath(__file__))
   filename = "RKI_COVID19_XXXX-XX-XX.feather"
   filename = filename.replace("XXXX-XX-XX", datum)
-  source_path = os.path.join(base_path, "..", "..", "RKIData", "feather", filename)
-  source_path = os.path.normpath(source_path)
+  url = "https://raw.githubusercontent.com/Rubber1Duck/RD_RKI_COVID19_DATA/master/data/" + filename
   date_time = dt.datetime.strptime(datum, "%Y-%m-%d")
   date_time_floored = dt.datetime.combine(date_time.date(), date_time.time().min).replace(tzinfo=dt.timezone.utc)
   unix_timestamp = int(dt.datetime.timestamp(date_time_floored)*1000)
+  size = requests.head(url, allow_redirects=True).headers["content-length"]
     
   new_meta = {
     "publication_date": datum,
     "version": datum,
-    "size": os.path.getsize(source_path),
+    "size": size,
     "filename": filename,
-    "url": source_path,
+    "url": url,
     "modified": unix_timestamp}
   
   return new_meta
@@ -49,7 +48,9 @@ if __name__ == '__main__':
     datum = datumloop.strftime('%Y-%m-%d')
     aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
     print (f"{aktuelleZeit} : running on {datum}")
+    
     new_meta = build_meta(datum)
+    
     metaNew_path = os.path.join(base_path, "..", "dataStore", "meta", "meta_new.json")
     metaNew_path = os.path.normpath(metaNew_path)
     with open(metaNew_path, "w", encoding="utf8") as json_file:
@@ -57,6 +58,7 @@ if __name__ == '__main__':
     versionsplit = datum.split("-")
     datumversion = versionsplit[0] + versionsplit[1] + versionsplit[2]
     version = "v1.9." + datumversion
+    
     filesToConvert = update()
     #aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
     #print(aktuelleZeit, ": Fallzahlen update")
