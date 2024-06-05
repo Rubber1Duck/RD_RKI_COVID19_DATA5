@@ -43,12 +43,6 @@ python ./src/build_metanew.py $DATE
 rm -f ./*.xz
 for file in `find dataStore/ -name "*.json"  ! -name "meta.json" -or -name "*.feather" -type f`;
   do
-    echo $file
-  done
-
-
-for file in `find dataStore/ -name "*.json"  ! -name "meta.json" -or -name "*.feather" -type f`;
-  do
     DATE2=$(date '+%Y-%m-%dT%H:%M:%SZ')
     SIZE1=$(stat -c%s $file)
     echo "$DATE2 : start compressing $file ($SIZE1 bytes)"
