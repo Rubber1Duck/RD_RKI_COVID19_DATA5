@@ -1,7 +1,13 @@
 #!/bin/bash
 
 #get todays date
-DATE="2024-05-29"
+DATE=$1
+
+if [[ "$DATE" == "" ]]; then
+  DATE2=$(date '+%Y-%m-%dT%H:%M:%SZ')
+  echo "$DATE2 : DATE is empty! exit now"
+  exit 1
+fi
 
 # print starting message
 STARTTIME=`date +%s`
