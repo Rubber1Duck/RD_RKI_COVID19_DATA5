@@ -8,7 +8,7 @@ import utils as ut
 def build_meta(datum):
   filename = "RKI_COVID19_XXXX-XX-XX.feather"
   filename = filename.replace("XXXX-XX-XX", datum)
-  url = "https://raw.githubusercontent.com/Rubber1Duck/RD_RKI_COVID19_DATA/master/data/feather/" + filename
+  url = "https://raw.githubusercontent.com/Rubber1Duck/RD_RKI_COVID19_DATA/master/data/" + filename
   date_time = dt.datetime.strptime(datum, "%Y-%m-%d")
   date_time_floored = dt.datetime.combine(date_time.date(), date_time.time().min).replace(tzinfo=dt.timezone.utc)
   unix_timestamp = int(dt.datetime.timestamp(date_time_floored)*1000)
