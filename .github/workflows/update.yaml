@@ -31,10 +31,7 @@ jobs:
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git add ':/*.csv'
-          git add ':/*.json'
-          git add ':/*.feather'
-          git add ':/*.xz'
+          git add .
           git status -s
           git commit -m "update on $(date '+%Y-%m-%dT%H:%M:%SZ')"
       - name: Push changes
