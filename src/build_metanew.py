@@ -50,6 +50,9 @@ if __name__ == '__main__':
     print (f"{aktuelleZeit} : running on {datum}")
     
     new_meta = build_meta(datum)
+    timeStamp = new_meta["modified"]
+    Datenstand = dt.datetime.fromtimestamp(timeStamp / 1000)
+    Datenstand = Datenstand.replace(hour=0, minute=0, second=0, microsecond=0)
     
     metaNew_path = os.path.join(base_path, "..", "dataStore", "meta", "meta_new.json")
     metaNew_path = os.path.normpath(metaNew_path)
@@ -59,7 +62,7 @@ if __name__ == '__main__':
     datumversion = versionsplit[0] + versionsplit[1] + versionsplit[2]
     version = "v1.9." + datumversion
     
-    filesToConvert = update()
+    filesToConvert = update(Datenstand)
     #aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
     #print(aktuelleZeit, ": Fallzahlen update")
     #f_update()
