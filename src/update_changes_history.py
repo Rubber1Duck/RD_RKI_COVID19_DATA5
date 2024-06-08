@@ -37,8 +37,8 @@ def update(Datenstand):
     # c7 = cases7d (cases7days)
     # i7 = incidence7d (incidence7days)
 
-    LK.rename(columns={"IdLandkreis": "i", "Landkreis": "t", "Meldedatum": "m"}, inplace=True)
-    BL.rename(columns={"IdBundesland": "i", "Bundesland": "t", "Meldedatum": "m"}, inplace=True)
+    LK.rename(columns={"IdLandkreis": "i", "Landkreis": "t", "Meldedatum": "m", "cases": "c", "deaths": "d", "recovered": "r", "cases7d": "c7", "incidence7d": "i7"}, inplace=True)
+    BL.rename(columns={"IdBundesland": "i", "Bundesland": "t", "Meldedatum": "m","cases": "c", "deaths": "d", "recovered": "r", "cases7d": "c7", "incidence7d": "i7"}, inplace=True)
     
     # split LK
     LKcases = LK.copy()
