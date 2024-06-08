@@ -1,183 +1,18 @@
 import os
 import datetime as dt
-import numpy as np
 import pandas as pd
-import json
 import utils as ut
 import gc
-import time
-from multiprocess_pandas import applyparallel
 
-def update():
+def update(Datenstand):
     base_path = os.path.dirname(os.path.abspath(__file__))
-    meta_path = os.path.join(base_path, "..", "dataStore", "meta")
-    meta_path = os.path.normpath(meta_path)
-    file_oldmeta = "meta.json"
-    file_newmeta = "meta_new.json"
-    BV_csv_path = os.path.join(base_path, "..", "Bevoelkerung", "Bevoelkerung.csv")
-    BV_csv_path = os.path.normpath(BV_csv_path)
-    BV_dtypes = {"AGS": "str", "Altersgruppe": "str", "Name": "str", "GueltigAb": "object", "GueltigBis": "object", "Einwohner": "Int32", "männlich": "Int32", "weiblich": "Int32"}
+    base_data_url = "https://raw.githubusercontent.com/Rubber1Duck/RD_RKI_COVID19_DATA/master/dataStore/historychanges/"
+    BL_base_url = base_data_url + "BL_BaseData.feather"
+    LK_base_url = base_data_url + "LK_BaseData.feather"
     
-    # open bevoelkerung.csv
-    BV = pd.read_csv(BV_csv_path, usecols=BV_dtypes.keys(), dtype=BV_dtypes)
-    BV["GueltigAb"] = pd.to_datetime(BV["GueltigAb"])
-    BV["GueltigBis"] = pd.to_datetime(BV["GueltigBis"])
-    BV_BL = BV[BV["AGS"].str.len() == 2].copy()
-    BV_BL.reset_index(inplace=True, drop=True)
-    BV_BL_A00 = BV_BL[BV_BL["Altersgruppe"] == "A00+"].copy()
-    BV_BL_A00.reset_index(inplace=True, drop=True)
-    BV_LK = BV[BV["AGS"].str.len() == 5].copy()
-    BV_LK.reset_index(inplace=True, drop=True)
-    BV_LK_A00 = BV_LK[BV_LK["Altersgruppe"] == "A00+"].copy()
-    BV_LK_A00.reset_index(inplace=True, drop=True)
-    # load covid latest from web
-    newmetaFull = os.path.normpath(os.path.join(meta_path, file_newmeta))
-    with open(newmetaFull, "r", encoding="utf8") as file:
-        newMetaObj = json.load(file)
-    fileNameOrig = newMetaObj["filename"]
-    fileSize = int(newMetaObj["size"])
-    url = newMetaObj["url"]
-    timeStamp = newMetaObj["modified"]
-    Datenstand = dt.datetime.fromtimestamp(timeStamp / 1000)
-    Datenstand = Datenstand.replace(hour=0, minute=0, second=0, microsecond=0)
-    try:
-        oldmetaFull = os.path.normpath(os.path.join(meta_path, file_oldmeta))
-        with open(oldmetaFull, "r", encoding="utf8") as file:
-            oldMetaObj = json.load(file)
-        oldDatenstandStr = dt.datetime.strptime(dt.datetime.fromtimestamp(oldMetaObj["timestamp"] / 1000), "%Y-%m-%d")
-    except:
-        oldDatenstand = Datenstand.date() - dt.timedelta(days=1)
-        oldDatenstandStr = dt.datetime.strftime(oldDatenstand, "%Y-%m-%d")
-    fileSizeMb = round(fileSize / 1024 / 1024, 1)
-    aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
-    print(f"{aktuelleZeit} : loading {fileNameOrig} (size: {fileSize} bytes = {fileSizeMb} MegaByte)")
+    BL = ut.read_file(BL_base_url)
+    LK = ut.read_file(LK_base_url)
     
-    LK = ut.read_file(fn=url)
-    
-    aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
-    print(f"{aktuelleZeit} : {LK.shape[0]} rows")
-
-    # History
-    # DistrictCasesHistory, DistrictDeathsHistory, DistrictRecoveredHistory
-    # StateCasesHistory, StateDeathsHistory, StateRecoveredHistory
-    print(f"{aktuelleZeit} : calculating history ...")
-    LK.drop(["IdStaat"], inplace=True, axis=1)
-    # used keylists
-    key_list_LK_hist = ["IdLandkreis", "Meldedatum"]
-    key_list_BL_hist = ["IdBundesland", "Meldedatum"]
-    key_list_ID0_hist = ["Meldedatum"]
-    LK["AnzahlFall"] = np.where(LK["NeuerFall"].isin([1, 0]), LK["AnzahlFall"], 0).astype(int)
-    LK["AnzahlTodesfall"] = np.where(LK["NeuerTodesfall"].isin([1, 0, -9]), LK["AnzahlTodesfall"], 0).astype(int)
-    LK["AnzahlGenesen"] = np.where(LK["NeuGenesen"].isin([1, 0, -9]), LK["AnzahlGenesen"], 0).astype(int)
-    LK.drop(["NeuerFall", "NeuerTodesfall", "NeuGenesen", "Altersgruppe", "Geschlecht", "Bundesland", "Landkreis", "Datenstand"], inplace=True, axis=1)
-    LK.rename(columns={"AnzahlFall": "c", "AnzahlTodesfall": "d", "AnzahlGenesen": "r"}, inplace=True)
-    agg_key = {
-        c: "max"
-        if c in ["IdBundesland"] else "sum"
-        for c in LK.columns
-        if c not in key_list_LK_hist
-    }
-    LK = LK.groupby(by=key_list_LK_hist, as_index=False, observed=True).agg(agg_key)
-    agg_key = {
-        c: "max"
-        if c in ["IdLandkreis"] else "sum"
-        for c in LK.columns
-        if c not in key_list_BL_hist
-    }
-    BL = LK.groupby(by=key_list_BL_hist, as_index=False, observed=True).agg(agg_key)
-    agg_key = {
-        c: "max"
-        if c in ["IdBundesland", "IdLandkreis"] else "sum"
-        for c in BL.columns
-        if c not in key_list_ID0_hist
-    }
-    ID0 = BL.groupby(by=key_list_ID0_hist, as_index=False, observed=True).agg(agg_key)
-    LK.drop(["IdBundesland"], inplace=True, axis=1)
-    LK.sort_values(by=key_list_LK_hist, inplace=True)
-    LK.reset_index(inplace=True, drop=True)
-    ID0["IdBundesland"] = "00"
-    BL = pd.concat([ID0, BL])
-    BL.drop(["IdLandkreis"], inplace=True, axis=1)
-    BL.sort_values(by=key_list_BL_hist, inplace=True)
-    BL.reset_index(inplace=True, drop=True)
-    LK["Meldedatum"] = pd.to_datetime(LK["Meldedatum"]).dt.date
-    BL["Meldedatum"] = pd.to_datetime(BL["Meldedatum"]).dt.date
-    # fill dates for every region
-    startDate = "2020-01-01"
-    allDates = pd.DataFrame(pd.date_range(end=(Datenstand - dt.timedelta(days=1)), start=startDate), columns=["Meldedatum"])
-    BLDates = pd.DataFrame(pd.unique(BL["IdBundesland"]).copy(), columns=["IdBundesland"])
-    LKDates = pd.DataFrame(pd.unique(LK["IdLandkreis"]).copy(), columns=["IdLandkreis"])
-    
-    # add Bundesland, Landkreis and Einwohner
-    BV_mask = ((BV_BL_A00["AGS"].isin(BLDates["IdBundesland"])) & (BV_BL_A00["GueltigAb"] <= Datenstand) & (BV_BL_A00["GueltigBis"] >= Datenstand))
-    BV_masked = BV_BL_A00[BV_mask].copy()
-    BV_masked.drop(["GueltigAb", "GueltigBis", "Altersgruppe", "männlich", "weiblich"], inplace=True, axis=1)
-    BV_masked.rename(columns={"AGS": "IdBundesland", "Name": "Bundesland"}, inplace=True)
-    BLDates = BLDates.merge(right=BV_masked, on=["IdBundesland"], how="left")
-        
-    BV_mask = ((BV_LK_A00["AGS"].isin(LKDates["IdLandkreis"])) & (BV_LK_A00["GueltigAb"] <= Datenstand) & (BV_LK_A00["GueltigBis"] >= Datenstand))
-    BV_masked = BV_LK_A00[BV_mask].copy()
-    BV_masked.drop(["GueltigAb", "GueltigBis", "Altersgruppe", "männlich", "weiblich"], inplace=True, axis=1)
-    BV_masked.rename(columns={"AGS": "IdLandkreis", "Name": "Landkreis"}, inplace=True)
-    LKDates = LKDates.merge(right=BV_masked, on="IdLandkreis", how="left")
-        
-    BLDates = BLDates.merge(allDates, how="cross")
-    BLDates = ut.squeeze_dataframe(BLDates)
-    LKDates = LKDates.merge(allDates, how="cross")
-    LKDates = ut.squeeze_dataframe(LKDates)
-    BLDates["Meldedatum"] = pd.to_datetime(BLDates["Meldedatum"]).dt.date
-    LKDates["Meldedatum"] = pd.to_datetime(LKDates["Meldedatum"]).dt.date
-    BL = BL.merge(BLDates, how="right", on=["IdBundesland", "Meldedatum"])
-    LK = LK.merge(LKDates, how="right", on=["IdLandkreis", "Meldedatum"])
-    
-    # clear unneeded data
-    ID0 = pd.DataFrame()
-    allDates = pd.DataFrame()
-    BLDates = pd.DataFrame()
-    LKDates = pd.DataFrame()
-    BV_mask = pd.DataFrame()
-    BV_masked = pd.DataFrame()
-    del ID0
-    del allDates
-    del BLDates
-    del LKDates
-    del BV_mask
-    del BV_masked
-    gc.collect()
-    
-    #fill nan with 0
-    BL["c"] = BL["c"].fillna(0).astype(int)
-    BL["d"] = BL["d"].fillna(0).astype(int)
-    BL["r"] = BL["r"].fillna(0).astype(int)
-    
-    LK["c"] = LK["c"].fillna(0).astype(int)
-    LK["d"] = LK["d"].fillna(0).astype(int)
-    LK["r"] = LK["r"].fillna(0).astype(int)
-    
-    BL["Meldedatum"] = BL["Meldedatum"].astype(str)
-    aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
-    print(f"{aktuelleZeit} :   |-calculating BL incidence with {os.cpu_count()} processes... {BL.shape[0]} rows.")
-    t1 = time.time()
-    BL = BL.groupby(["IdBundesland"], observed=True).apply_parallel(ut.calc_incidence, progressbar=False)
-    t2 = time.time()
-    aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
-    LKuniqueIdsCount = pd.unique(LK["IdLandkreis"]).shape[0]
-    LKEstimateTime = (t2 - t1) * LKuniqueIdsCount / 17
-    print(f"{aktuelleZeit} :   |-Done in {round(t2 - t1, 5)} sec. Estimate {round(LKEstimateTime, 5)} sec. for LK!")
-    BL.reset_index(inplace=True, drop=True)
-    BL.drop(["Einwohner"], inplace=True, axis=1)
-        
-    LK["Meldedatum"] = LK["Meldedatum"].astype(str)
-    aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
-    print(f"{aktuelleZeit} :   |-calculating LK incidence with {os.cpu_count()} processes... {LK.shape[0]} rows.")
-    t1 = time.time()
-    LK = LK.groupby(["IdLandkreis"], observed=True).apply_parallel(ut.calc_incidence, progressbar=False)
-    t2 = time.time()
-    aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
-    print(f"{aktuelleZeit} :   |-Done in {round(t2-t1, 5)} sec. Thats {round(LKEstimateTime/(t2 - t1), 2)} times faster than estimated")
-    LK.reset_index(inplace=True, drop=True)
-    LK.drop(["Einwohner"], inplace=True, axis=1)
-        
     # store all files not compressed! will be done later
     filesToConvert = []
     historyPath = os.path.normpath(os.path.join(base_path, "..", "dataStore", "history"))
