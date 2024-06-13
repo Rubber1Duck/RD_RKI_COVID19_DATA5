@@ -4,14 +4,15 @@ import pandas as pd
 import utils as ut
 import gc
 
-def update(Datenstand):
+def update(meta):
+    timeStamp = meta["modified"]
+    Datenstand = dt.datetime.fromtimestamp(timeStamp / 1000)
+    Datenstand = Datenstand.replace(hour=0, minute=0, second=0, microsecond=0)
+
     base_path = os.path.dirname(os.path.abspath(__file__))
-    base_data_url = "https://raw.githubusercontent.com/Rubber1Duck/RD_RKI_COVID19_DATA/master/dataStore/historychanges/"
-    BL_base_url = base_data_url + "BL_BaseData.feather"
-    LK_base_url = base_data_url + "LK_BaseData.feather"
-    
-    BL = ut.read_file(BL_base_url)
-    LK = ut.read_file(LK_base_url)
+        
+    BL = ut.read_file(meta["BL_url"])
+    LK = ut.read_file(meta["LK_url"])
     
     # store all files not compressed! will be done later
     filesToConvert = []
