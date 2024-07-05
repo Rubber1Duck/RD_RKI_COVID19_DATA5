@@ -36,7 +36,7 @@ echo "$DATE2 : extract all data"
 DATE2=$(date '+%Y-%m-%dT%H:%M:%SZ')
 echo "$DATE2 : executing python build_metanew.py $DATE"
 
-python ./src/build_metanew.py $DATE
+python ./src/build_metanew.py $DATE "ghrun"
 
 
 # compress json files in history

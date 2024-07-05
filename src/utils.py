@@ -85,7 +85,7 @@ def calc_incidence(df):
         indexPos = idIndexes.index(index)
         cases7d = 0
         for x in [y for y in range(0, 7) if indexPos - y >=0]:
-            cases7d += df.at[idIndexes[indexPos - x], "c"]
+            cases7d += df.at[idIndexes[indexPos - x], "cases"]
         df.at[index, "c7"] = cases7d
         df.at[index, "i7"] = (cases7d / df.at[index, "Einwohner"] * 100000).round(5)
     df["c7"] = df["c7"].astype(int)

@@ -1,7 +1,7 @@
 import os, json, sys, requests
 import datetime as dt
 import pandas as pd
-from update_changes_history import update
+from update_changes_history import update, update_mass
 
 def build_meta(datum):
   BL_filename = "BL_BaseData.feather"
@@ -31,44 +31,66 @@ def build_meta(datum):
     "LK_filename": LK_filename,
     "LK_url": LK_url,
     "LK_size": LK_size,
+    "filename": "",
+    "filepath": "",
+    "filesize": "",
+    "modified": unix_timestamp}
+  
+  return new_meta
+
+def build_meta_init(datum):
+  dataFileName ="RKI_COVID19_" + datum + ".csv.xz"
+  base_path = os.path.dirname(os.path.abspath(__file__))
+  data_path = os.path.join(base_path, "..","..", "RKIData", dataFileName)
+  filesize = os.path.getsize(data_path)
+  date_time = dt.datetime.strptime(datum, "%Y-%m-%d")
+  date_time_floored = dt.datetime.combine(date_time.date(), date_time.time().min).replace(tzinfo=dt.timezone.utc)
+  unix_timestamp = int(dt.datetime.timestamp(date_time_floored)*1000)
+      
+  new_meta = {
+    "publication_date": datum,
+    "version": datum,
+    "BL_filename": "",
+    "BL_url": "",
+    "BL_size": "",
+    "LK_filename": "",
+    "LK_url": "",
+    "LK_size": "",
+    "filename": dataFileName,
+    "filepath": data_path,
+    "filesize": filesize,
     "modified": unix_timestamp}
   
   return new_meta
 
 if __name__ == '__main__':
   start = dt.datetime.now()
-  if len(sys.argv) == 1:
-    startDatum = dt.datetime.strftime(start.date(), "%Y-%m-%d")
-    endDatum = dt.datetime.strftime(start.date(), "%Y-%m-%d")
-  elif len(sys.argv) == 2:
+  ghrun = False
+  if len(sys.argv) == 2:
     startDatum = sys.argv[1]
     endDatum = sys.argv[1]
   elif len(sys.argv) == 3:
-    startDatum = sys.argv[1]
-    endDatum = sys.argv[2]
+    if sys.argv[2] == "ghrun":
+      startDatum = sys.argv[1]
+      ghrun = True
+    else:
+      startDatum = sys.argv[1]
+      endDatum =sys.argv[2]
   elif len(sys.argv) > 3:
     raise ValueError('not more than 2 arguments are allowed')
   startObject = dt.datetime.strptime(startDatum, '%Y-%m-%d')
   endObject = dt.datetime.strptime(endDatum, '%Y-%m-%d')
-  
   base_path = os.path.dirname(os.path.abspath(__file__))
-  aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
-  print(f"{aktuelleZeit} : running from {startObject} to {endObject}")
-  for datumloop in pd.date_range(start=startObject, end=endObject).tolist():
+  if ghrun:
     startTime = dt.datetime.now()
-    datum = datumloop.strftime('%Y-%m-%d')
     aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
-    print (f"{aktuelleZeit} : running on {datum}")
-    
-    new_meta = build_meta(datum)
-        
+    print (f"{aktuelleZeit} : running on {startDatum}")
+    new_meta = build_meta(startDatum)
     metaNew_path = os.path.join(base_path, "..", "dataStore", "meta", "meta_new.json")
     metaNew_path = os.path.normpath(metaNew_path)
     with open(metaNew_path, "w", encoding="utf8") as json_file:
       json.dump(new_meta, json_file, ensure_ascii=False)
-        
-    update(new_meta)
-    
+    update(meta=new_meta, BL="", LK="", mode="auto" )
     meta_path = os.path.join(base_path, "..", "dataStore", "meta", "meta.json")
     meta_path = os.path.normpath(meta_path)
     if os.path.exists(meta_path):
@@ -76,7 +98,30 @@ if __name__ == '__main__':
     os.rename(metaNew_path, meta_path)
     endTime = dt.datetime.now()
     aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
-    print(f"{aktuelleZeit} : total time for date: {datum} => {endTime - startTime}")
+    print(f"{aktuelleZeit} : total time for date: {startDatum} => {endTime - startTime}")
     print("****************************************************")
+  else:
+    aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
+    print(f"{aktuelleZeit} : run from {startDatum} to {endDatum}")
+    for datumloop in pd.date_range(start=startObject, end=endObject).tolist():
+      startTime = dt.datetime.now()
+      aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
+      datum = dt.datetime.strftime(datumloop, "%Y-%m-%d")
+      print (f"{aktuelleZeit} : running on {datum}")
+      new_meta = build_meta_init(datum)
+      metaNew_path = os.path.join(base_path, "..", "dataStore", "meta", "meta_new.json")
+      metaNew_path = os.path.normpath(metaNew_path)
+      with open(metaNew_path, "w", encoding="utf8") as json_file:
+        json.dump(new_meta, json_file, ensure_ascii=False)
+      update_mass(meta=new_meta)
+      meta_path = os.path.join(base_path, "..", "dataStore", "meta", "meta.json")
+      meta_path = os.path.normpath(meta_path)
+      if os.path.exists(meta_path):
+        os.remove(meta_path)
+      os.rename(metaNew_path, meta_path)
+      endTime = dt.datetime.now()
+      aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
+      print(f"{aktuelleZeit} : total time for date: {datum} => {endTime - startTime}")
+      print("****************************************************")
   end = dt.datetime.now()
-  print(f"{aktuelleZeit} : overall time for range {startObject} to {endObject} is => {end - start}")
+  print(f"{aktuelleZeit} : overall time for range {startDatum} to {endDatum} is => {end - start}")
