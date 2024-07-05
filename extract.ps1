@@ -1,4 +1,4 @@
-$files=Get-ChildItem -path .\dataStore\ -filter *.feather.xz -Recurse | ForEach-Object{$_.FullName}
+$files=Get-ChildItem -path .\dataStore\ -filter *.json.xz -Recurse | ForEach-Object{$_.FullName}
 foreach($file in $files) {
   $filePath = Split-Path $file -Parent
   $filePath = $filePath+'\'

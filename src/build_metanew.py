@@ -2,8 +2,6 @@ import os, json, sys, requests
 import datetime as dt
 import pandas as pd
 from update_changes_history import update
-import time
-import utils as ut
 
 def build_meta(datum):
   BL_filename = "BL_BaseData.feather"
@@ -69,7 +67,7 @@ if __name__ == '__main__':
     with open(metaNew_path, "w", encoding="utf8") as json_file:
       json.dump(new_meta, json_file, ensure_ascii=False)
         
-    filesToConvert = update(new_meta)
+    update(new_meta)
     
     meta_path = os.path.join(base_path, "..", "dataStore", "meta", "meta.json")
     meta_path = os.path.normpath(meta_path)
@@ -80,17 +78,5 @@ if __name__ == '__main__':
     aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
     print(f"{aktuelleZeit} : total time for date: {datum} => {endTime - startTime}")
     print("****************************************************")
-  print(f"convert all final feather files to json files, and write to disc")
-  t1 = time.time()
-  for featherfile, filename, path in filesToConvert:
-    aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
-    print(f"{aktuelleZeit} : read  {featherfile}")
-    df = ut.read_file(featherfile)
-    aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
-    print(f"{aktuelleZeit} : write {os.path.join(path, filename)}")
-    ut.write_json(df, filename, path)
-  t2 = time.time()
-  aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
-  print(f"{aktuelleZeit} : done, all files written in {round(t2 - t1, 5)} secs")
   end = dt.datetime.now()
   print(f"{aktuelleZeit} : overall time for range {startObject} to {endObject} is => {end - start}")

@@ -5,6 +5,17 @@ import utils as ut
 import gc
 
 def update(meta):
+    HC_dtp = {"i": "str", "m": "object", "c": "int64"}
+    HD_dtp = {"i": "str", "m": "object", "d": "int64"}
+    HR_dtp = {"i": "str", "m": "object", "r": "int64"}
+    HI_dtp = {"i": "str", "m": "object", "c7": "int64", "i7": "float"}
+
+    HCC_dtp = {"i": "str", "m": "object", "c": "int64", "dc": "int64", "cD": "object"}
+    HCD_dtp = {"i": "str", "m": "object", "d": "int64", "cD": "object"}
+    HCR_dtp = {"i": "str", "m": "object", "r": "int64", "cD": "object"}
+    HCI_dtp = {"i": "str", "m": "object", "c7": "int64", "i7": "float", "cD": "object"}
+    
+
     timeStamp = meta["modified"]
     Datenstand = dt.datetime.fromtimestamp(timeStamp / 1000)
     Datenstand = Datenstand.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -13,20 +24,6 @@ def update(meta):
         
     BL = ut.read_file(meta["BL_url"])
     LK = ut.read_file(meta["LK_url"])
-    
-    # store all files not compressed! will be done later
-    filesToConvert = []
-    historyPath = os.path.normpath(os.path.join(base_path, "..", "dataStore", "history"))
-    LKFeatherFile = "districts.feather"
-    BLFeatherFile = "states.feather"
-    LKcasesFeatherFull = os.path.join(historyPath, "cases", LKFeatherFile)
-    LKdeathsFeatherFull = os.path.join(historyPath, "deaths", LKFeatherFile)
-    LKrecoveredFeatherFull = os.path.join(historyPath, "recovered", LKFeatherFile)
-    LKincidenceFeatherFull = os.path.join(historyPath, "incidence", LKFeatherFile)
-    BLcasesFeatherFull = os.path.join(historyPath, "cases", BLFeatherFile)
-    BLdeathsFeatherFull = os.path.join(historyPath, "deaths", BLFeatherFile)
-    BLrecoveredFeatherFull = os.path.join(historyPath, "recovered", BLFeatherFile)
-    BLincidenceFeatherFull = os.path.join(historyPath, "incidence", BLFeatherFile)
     
     # for smaler files rename fields
     # i = Id(Landkreis or Bundesland)
@@ -44,12 +41,16 @@ def update(meta):
     # split LK
     LKcases = LK.copy()
     LKcases.drop(["t", "d", "r", "c7", "i7"], inplace=True, axis=1)
+    LKcases["c"] = LKcases["c"].astype("int64")
     LKdeaths = LK.copy()
     LKdeaths.drop(["t", "c", "r", "c7", "i7"], inplace=True, axis=1)
+    LKdeaths["d"] = LKdeaths["d"].astype("int64")
     LKrecovered = LK.copy()
     LKrecovered.drop(["t", "c", "d", "c7", "i7"], inplace=True, axis=1)
+    LKrecovered["r"] = LKrecovered["r"].astype("int64")
     LKincidence = LK.copy()
     LKincidence.drop(["t", "c", "d", "r"], inplace=True, axis=1)
+    LKincidence["c7"] = LKincidence["c7"].astype("int64")
     # free memory
     LK = pd.DataFrame()
     del LK
@@ -58,55 +59,85 @@ def update(meta):
     # split BL
     BLcases = BL.copy()
     BLcases.drop(["t", "d", "r", "c7", "i7"], inplace=True, axis=1)
+    BLcases["c"] = BLcases["c"].astype("int64")
     BLdeaths = BL.copy()
     BLdeaths.drop(["t", "c", "r", "c7", "i7"], inplace=True, axis=1)
+    BLdeaths["d"] = BLdeaths["d"].astype("int64")
     BLrecovered = BL.copy()
     BLrecovered.drop(["t", "c", "d", "c7", "i7"], inplace=True, axis=1)
+    BLrecovered["r"] = BLrecovered["r"].astype("int64")
     BLincidence = BL.copy()
     BLincidence.drop(["t", "c", "d", "r"], inplace=True, axis=1)
+    BLincidence["c7"] = BLincidence["c7"].astype("int64")
     # free memory
     BL = pd.DataFrame()
     del BL
     gc.collect()
 
+    # store all files not compressed! will be done later
+    historyPath = os.path.normpath(os.path.join(base_path, "..", "dataStore", "history"))
+    
+    LKJsonFile = "districts.json"
+    BLJsonFile = "states.json"
+    
+    CasesPath = os.path.join(historyPath, "cases")
+    DeathsPath = os.path.join(historyPath, "deaths")
+    RecoveredPath = os.path.join(historyPath, "recovered")
+    IncidencePath = os.path.join(historyPath, "incidence")
+    
+    LKcasesJsonFull = os.path.join(CasesPath, LKJsonFile)
+    LKdeathsJsonFull = os.path.join(DeathsPath, LKJsonFile)
+    LKrecoveredJsonFull = os.path.join(RecoveredPath, LKJsonFile)
+    LKincidenceJsonFull = os.path.join(IncidencePath, LKJsonFile)
+    
+    BLcasesJsonFull = os.path.join(CasesPath, BLJsonFile)
+    BLdeathsJsonFull = os.path.join(DeathsPath, BLJsonFile)
+    BLrecoveredJsonFull = os.path.join(RecoveredPath, BLJsonFile)
+    BLincidenceJsonFull = os.path.join(IncidencePath, BLJsonFile)
+
     # read oldLK(cases, deaths, recovered, incidence) if old file exist
     # write new data 
-    if os.path.exists(LKcasesFeatherFull):
-        oldLKcases = ut.read_file(LKcasesFeatherFull)
-    ut.write_file(LKcases, LKcasesFeatherFull, compression="lz4")
-    filesToConvert.append((LKcasesFeatherFull, "districts.json", os.path.join(historyPath, "cases")))
-    if os.path.exists(LKdeathsFeatherFull):
-        oldLKdeaths = ut.read_file(LKdeathsFeatherFull)
-    ut.write_file(LKdeaths, LKdeathsFeatherFull, compression="lz4")
-    filesToConvert.append((LKdeathsFeatherFull, "districts.json", os.path.join(historyPath, "deaths")))
-    if os.path.exists(LKrecoveredFeatherFull):
-        oldLKrecovered = ut.read_file(LKrecoveredFeatherFull)
-    ut.write_file(LKrecovered, LKrecoveredFeatherFull, compression="lz4")
-    filesToConvert.append((LKrecoveredFeatherFull, "districts.json", os.path.join(historyPath, "recovered")))
-    if os.path.exists(LKincidenceFeatherFull):
-        oldLKincidence = ut.read_file(LKincidenceFeatherFull)
-    ut.write_file(LKincidence, LKincidenceFeatherFull, compression="lz4")
-    filesToConvert.append((LKincidenceFeatherFull, "districts.json", os.path.join(historyPath, "incidence")))
+    if os.path.exists(LKcasesJsonFull):
+        oldLKcases = ut.read_json(fn=LKJsonFile, path=CasesPath, dtype=HC_dtp)
+        oldLKcases["c"] = oldLKcases["c"].astype("int64")
+    ut.write_json(df=LKcases, pt=CasesPath, fn=LKJsonFile)
     
-    
+    if os.path.exists(LKdeathsJsonFull):
+        oldLKdeaths = ut.read_json(fn=LKJsonFile, path=DeathsPath, dtype=HD_dtp)
+        oldLKdeaths["d"] = oldLKdeaths["d"].astype("int64")
+    ut.write_json(df=LKdeaths, pt=DeathsPath, fn=LKJsonFile)
+        
+    if os.path.exists(LKrecoveredJsonFull):
+        oldLKrecovered = ut.read_json(fn=LKJsonFile, path=RecoveredPath, dtype=HR_dtp)
+        oldLKrecovered["r"] = oldLKrecovered["r"].astype("int64")
+    ut.write_json(df=LKrecovered, pt=RecoveredPath, fn=LKJsonFile)
+        
+    if os.path.exists(LKincidenceJsonFull):
+        oldLKincidence = ut.read_json(fn=LKJsonFile, path=IncidencePath, dtype=HI_dtp)
+        oldLKincidence["c7"] = oldLKincidence["c7"].astype("int64")
+    ut.write_json(df=LKincidence, pt=IncidencePath, fn=LKJsonFile)
+        
     # read oldBL(cases, deaths, recovered, incidence) if old file exist
     # write new data
-    if os.path.exists(BLcasesFeatherFull):
-        oldBLcases = ut.read_file(BLcasesFeatherFull)
-    ut.write_file(BLcases, BLcasesFeatherFull, compression="lz4")
-    filesToConvert.append((BLcasesFeatherFull, "states.json", os.path.join(historyPath, "cases")))
-    if os.path.exists(BLdeathsFeatherFull):
-        oldBLdeaths = ut.read_file(BLdeathsFeatherFull)
-    ut.write_file(BLdeaths, BLdeathsFeatherFull, compression="lz4")
-    filesToConvert.append((BLdeathsFeatherFull, "states.json", os.path.join(historyPath, "deaths")))
-    if os.path.exists(BLrecoveredFeatherFull):
-        oldBLrecovered = ut.read_file(BLrecoveredFeatherFull)
-    ut.write_file(BLrecovered, BLrecoveredFeatherFull, compression="lz4")
-    filesToConvert.append((BLrecoveredFeatherFull, "states.json", os.path.join(historyPath, "recovered")))
-    if os.path.exists(BLincidenceFeatherFull):
-        oldBLincidence = ut.read_file(BLincidenceFeatherFull)
-    ut.write_file(BLincidence, BLincidenceFeatherFull, compression="lz4")
-    filesToConvert.append((BLincidenceFeatherFull, "states.json", os.path.join(historyPath, "incidence")))
+    if os.path.exists(BLcasesJsonFull):
+        oldBLcases = ut.read_json(fn=BLJsonFile, path=CasesPath, dtype=HC_dtp)
+        oldBLcases["c"] = oldBLcases["c"].astype("int64")
+    ut.write_json(df=BLcases, pt=CasesPath, fn=BLJsonFile)
+       
+    if os.path.exists(BLdeathsJsonFull):
+        oldBLdeaths = ut.read_json(fn=BLJsonFile, path=DeathsPath, dtype=HD_dtp)
+        oldBLdeaths["d"] = oldBLdeaths["d"].astype("int64")
+    ut.write_json(df=BLdeaths, pt=DeathsPath, fn=BLJsonFile)
+       
+    if os.path.exists(BLrecoveredJsonFull):
+        oldBLrecovered = ut.read_json(fn=BLJsonFile, path=RecoveredPath, dtype=HR_dtp)
+        oldBLrecovered["r"] = oldBLrecovered["r"].astype("int64")
+    ut.write_json(df=BLrecovered, pt=RecoveredPath, fn=BLJsonFile)
+    
+    if os.path.exists(BLincidenceJsonFull):
+        oldBLincidence = ut.read_json(fn=BLJsonFile, path=IncidencePath, dtype=HI_dtp)
+        oldBLincidence["c7"] = oldBLincidence["c7"].astype("int64")
+    ut.write_json(df=BLincidence, pt=IncidencePath, fn=BLJsonFile)
 
     # calculate diff data
     aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
@@ -121,16 +152,27 @@ def update(meta):
     except:
         LKDiffCases = LKcases.copy()
         LKDiffCases["dc"] = LKDiffCases["c"]
+    
     try:
         LKDiffDeaths = ut.get_different_rows(oldLKdeaths, LKdeaths)
     except:
         LKDiffDeaths = LKdeaths.copy()
+    
     try:
         LKDiffRecovered = ut.get_different_rows(oldLKrecovered, LKrecovered)
     except:
         LKDiffRecovered = LKrecovered.copy()
+    
     try:
+        # dont compare float values
+        oldLKincidence.drop("i7", inplace=True, axis=1)
+        temp = LKincidence.copy()
+        LKincidence.drop("i7", inplace=True, axis=1)
         LKDiffIncidence = ut.get_different_rows(oldLKincidence, LKincidence)
+        LKDiffIncidence.set_index(["i","m"], inplace=True, drop=False)
+        temp.set_index(["i","m"], inplace=True, drop=True)
+        LKDiffIncidence["i7"] = temp["i7"]
+        LKDiffIncidence.reset_index(inplace=True, drop=True)
     except:
         LKDiffIncidence = LKincidence.copy()
 
@@ -143,16 +185,26 @@ def update(meta):
     except:
         BLDiffCases = BLcases.copy()
         BLDiffCases["dc"] = BLDiffCases["c"]
+    
     try:
         BLDiffDeaths = ut.get_different_rows(oldBLdeaths, BLdeaths)
     except:
         BLDiffDeaths = BLdeaths.copy()
+    
     try:
         BLDiffRecovered = ut.get_different_rows(oldBLrecovered, BLrecovered)
     except:
         BLDiffRecovered = BLrecovered.copy()
+    
     try:
+        oldBLincidence.drop("i7", inplace=True, axis=1)
+        temp = BLincidence.copy()
+        BLincidence.drop("i7", inplace=True, axis=1)
         BLDiffIncidence = ut.get_different_rows(oldBLincidence, BLincidence)
+        BLDiffIncidence.set_index(["i","m"], inplace=True, drop=False)
+        temp.set_index(["i","m"], inplace=True, drop=True)
+        BLDiffIncidence["i7"] = temp["i7"]
+        BLDiffIncidence.reset_index(inplace=True, drop=True)
     except:
         BLDiffIncidence = BLincidence.copy()
     
@@ -166,98 +218,88 @@ def update(meta):
     BLDiffDeaths["cD"] = ChangeDateStr
     BLDiffRecovered["cD"] = ChangeDateStr
     BLDiffIncidence["cD"] = ChangeDateStr
-
-    districtsDiffFeatherFile = "districts_Diff.feather"
-    LKDiffCasesFeatherFull = os.path.join(changesPath, "cases", districtsDiffFeatherFile)
-    LKDiffDeathsFeatherFull = os.path.join(changesPath, "deaths", districtsDiffFeatherFile)
-    LKDiffRecoveredFeatherFull = os.path.join(changesPath, "recovered", districtsDiffFeatherFile)
-    LKDiffIncidenceFeatherFull = os.path.join(changesPath, "incidence", districtsDiffFeatherFile)
-
-    statesDiffFeatherFile = "states_Diff.feather"
-    BLDiffCasesFeatherFull = os.path.join(changesPath, "cases", statesDiffFeatherFile)
-    BLDiffDeathsFeatherFull = os.path.join(changesPath, "deaths", statesDiffFeatherFile)
-    BLDiffRecoveredFeatherFull = os.path.join(changesPath, "recovered", statesDiffFeatherFile)
-    BLDiffIncidenceFeatherFull = os.path.join(changesPath, "incidence", statesDiffFeatherFile)
     
-    path = os.path.join(changesPath, "cases")
-    if os.path.exists(LKDiffCasesFeatherFull):
-        LKoldDiffCases = ut.read_file(LKDiffCasesFeatherFull)
+    LKDiffJsonFile = "districts_Diff.json"
+    BLDiffJsonFile = "states_Diff.json"
+
+    DiffCasesPath = os.path.join(changesPath, "cases")
+    DiffDeathsPath = os.path.join(changesPath, "deaths")
+    DiffRecoveredPath = os.path.join(changesPath, "recovered")
+    DiffIncidencePath = os.path.join(changesPath, "incidence")
+    
+    LKDiffCasesJsonFull = os.path.join(DiffCasesPath, LKDiffJsonFile)
+    LKDiffDeathsJsonFull = os.path.join(DiffDeathsPath, LKDiffJsonFile)
+    LKDiffRecoveredJsonFull = os.path.join(DiffRecoveredPath, LKDiffJsonFile)
+    LKDiffIncidenceJsonFull = os.path.join(DiffIncidencePath, LKDiffJsonFile)
+
+    BLDiffCasesJsonFull = os.path.join(DiffCasesPath, BLDiffJsonFile)
+    BLDiffDeathsJsonFull = os.path.join(DiffDeathsPath, BLDiffJsonFile)
+    BLDiffRecoveredJsonFull = os.path.join(DiffRecoveredPath, BLDiffJsonFile)
+    BLDiffIncidenceJsonFull = os.path.join(DiffIncidencePath, BLDiffJsonFile)
+    
+    if os.path.exists(LKDiffCasesJsonFull):
+        LKoldDiffCases = ut.read_json(fn=LKDiffJsonFile, path=DiffCasesPath, dtype=HCC_dtp)
         LKoldDiffCases = LKoldDiffCases[LKoldDiffCases["cD"] != ChangeDateStr]
         LKDiffCases = pd.concat([LKoldDiffCases, LKDiffCases])
     LKDiffCases["dc"] = LKDiffCases["dc"].astype(int)
     LKDiffCases.sort_values(by=["i", "m", "cD"], inplace=True)
     LKDiffCases.reset_index(inplace=True, drop=True)
-    ut.write_file(LKDiffCases, LKDiffCasesFeatherFull, compression="lz4")
-    filesToConvert.append((LKDiffCasesFeatherFull, "districts_Diff.json", path))
-    
-    path = os.path.join(changesPath, "deaths")
-    if os.path.exists(LKDiffDeathsFeatherFull):
-        LKoldDiffDeaths = ut.read_file(LKDiffDeathsFeatherFull)
+    ut.write_json(df=LKDiffCases, pt=DiffCasesPath, fn=LKDiffJsonFile)
+        
+    if os.path.exists(LKDiffDeathsJsonFull):
+        LKoldDiffDeaths = ut.read_json(fn=LKDiffJsonFile, path=DiffDeathsPath, dtype= HCD_dtp)
         LKoldDiffDeaths = LKoldDiffDeaths[LKoldDiffDeaths["cD"] != ChangeDateStr]
         LKDiffDeaths = pd.concat([LKoldDiffDeaths, LKDiffDeaths])
     LKDiffDeaths.sort_values(by=["i", "m", "cD"], inplace=True)
     LKDiffDeaths.reset_index(inplace=True, drop=True)
-    ut.write_file(LKDiffDeaths, LKDiffDeathsFeatherFull, compression="lz4")
-    filesToConvert.append((LKDiffDeathsFeatherFull, "districts_Diff.json", path))
-    
-    path = os.path.join(changesPath, "recovered")
-    if os.path.exists(LKDiffRecoveredFeatherFull):
-        LKoldDiffRecovered = ut.read_file(LKDiffRecoveredFeatherFull)
+    ut.write_json(df=LKDiffDeaths, pt=DiffDeathsPath, fn=LKDiffJsonFile)
+        
+    if os.path.exists(LKDiffRecoveredJsonFull):
+        LKoldDiffRecovered = ut.read_json(fn=LKDiffJsonFile, path=DiffRecoveredPath, dtype= HCR_dtp)
         LKoldDiffRecovered = LKoldDiffRecovered[LKoldDiffRecovered["cD"] != ChangeDateStr]
         LKDiffRecovered = pd.concat([LKoldDiffRecovered, LKDiffRecovered])
     LKDiffRecovered.sort_values(by=["i", "m", "cD"], inplace=True)
     LKDiffRecovered.reset_index(inplace=True, drop=True)
-    ut.write_file(LKDiffRecovered, LKDiffRecoveredFeatherFull, compression="lz4")
-    filesToConvert.append((LKDiffRecoveredFeatherFull, "districts_Diff.json", path))
-    
-    path = os.path.join(changesPath, "incidence")
-    if os.path.exists(LKDiffIncidenceFeatherFull):
-        LKoldDiffIncidence = ut.read_file(LKDiffIncidenceFeatherFull)
+    ut.write_json(df=LKDiffRecovered, pt=DiffRecoveredPath, fn=LKDiffJsonFile)
+        
+    if os.path.exists(LKDiffIncidenceJsonFull):
+        LKoldDiffIncidence = ut.read_json(fn=LKDiffJsonFile, path=DiffIncidencePath, dtype= HCI_dtp)
         LKoldDiffIncidence = LKoldDiffIncidence[LKoldDiffIncidence["cD"] != ChangeDateStr]
         LKDiffIncidence = pd.concat([LKoldDiffIncidence, LKDiffIncidence])
     LKDiffIncidence.sort_values(by=["i", "m", "cD"], inplace=True)
     LKDiffIncidence.reset_index(inplace=True, drop=True)
-    ut.write_file(LKDiffIncidence, LKDiffIncidenceFeatherFull, compression="lz4")
-    filesToConvert.append((LKDiffIncidenceFeatherFull, "districts_Diff.json", path))
-
-    path = os.path.normpath(os.path.join(base_path, "..", "dataStore", "historychanges", "cases"))
-    if os.path.exists(BLDiffCasesFeatherFull):
-        BLoldDiffCases = ut.read_file(BLDiffCasesFeatherFull)
+    ut.write_json(df=LKDiffIncidence, pt=DiffIncidencePath, fn=LKDiffJsonFile)
+    
+    if os.path.exists(BLDiffCasesJsonFull):
+        BLoldDiffCases = ut.read_json(fn=BLDiffJsonFile, path=DiffCasesPath, dtype=HCC_dtp)
         BLoldDiffCases = BLoldDiffCases[BLoldDiffCases["cD"] != ChangeDateStr]
         BLDiffCases = pd.concat([BLoldDiffCases, BLDiffCases])
     BLDiffCases["dc"] = BLDiffCases["dc"].astype(int)
     BLDiffCases.sort_values(by=["i", "m", "cD"], inplace=True)
     BLDiffCases.reset_index(inplace=True, drop=True)
-    ut.write_file(BLDiffCases, BLDiffCasesFeatherFull, compression="lz4")
-    filesToConvert.append((BLDiffCasesFeatherFull, "states_Diff.json", path))
-    
-    path = os.path.normpath(os.path.join(base_path, "..", "dataStore", "historychanges", "deaths"))
-    if os.path.exists(BLDiffDeathsFeatherFull):
-        BLoldDiffDeaths = ut.read_file(BLDiffDeathsFeatherFull)
+    ut.write_json(df=BLDiffCases, pt=DiffCasesPath, fn=BLDiffJsonFile)
+        
+    if os.path.exists(BLDiffDeathsJsonFull):
+        BLoldDiffDeaths = ut.read_json(fn=BLDiffJsonFile, path=DiffDeathsPath, dtype= HCD_dtp)
         BLoldDiffDeaths = BLoldDiffDeaths[BLoldDiffDeaths["cD"] != ChangeDateStr]
         BLDiffDeaths = pd.concat([BLoldDiffDeaths, BLDiffDeaths])
     BLDiffDeaths.sort_values(by=["i", "m", "cD"], inplace=True)
     BLDiffDeaths.reset_index(inplace=True, drop=True)
-    ut.write_file(BLDiffDeaths, BLDiffDeathsFeatherFull, compression="lz4")
-    filesToConvert.append((BLDiffDeathsFeatherFull, "states_Diff.json", path))
-    
-    path = os.path.normpath(os.path.join(base_path, "..", "dataStore", "historychanges", "recovered"))
-    if os.path.exists(BLDiffRecoveredFeatherFull):
-        BLoldDiffRecovered = ut.read_file(BLDiffRecoveredFeatherFull)
+    ut.write_json(df=BLDiffDeaths, pt=DiffDeathsPath, fn=BLDiffJsonFile)
+        
+    if os.path.exists(BLDiffRecoveredJsonFull):
+        BLoldDiffRecovered = ut.read_json(fn=BLDiffJsonFile, path=DiffRecoveredPath, dtype= HCR_dtp)
         BLoldDiffRecovered = BLoldDiffRecovered[BLoldDiffRecovered["cD"] != ChangeDateStr]
         BLDiffRecovered = pd.concat([BLoldDiffRecovered, BLDiffRecovered])
     BLDiffRecovered.sort_values(by=["i", "m", "cD"], inplace=True)
     BLDiffRecovered.reset_index(inplace=True, drop=True)
-    ut.write_file(BLDiffRecovered, BLDiffRecoveredFeatherFull, compression="lz4")
-    filesToConvert.append((BLDiffRecoveredFeatherFull, "states_Diff.json", path))
-    
-    path = os.path.normpath(os.path.join(base_path, "..", "dataStore", "historychanges", "incidence"))
-    if os.path.exists(BLDiffIncidenceFeatherFull):
-        BLoldDiffIncidence = ut.read_file(BLDiffIncidenceFeatherFull)
+    ut.write_json(df=BLDiffRecovered, pt=DiffRecoveredPath, fn=BLDiffJsonFile)
+        
+    if os.path.exists(BLDiffIncidenceJsonFull):
+        BLoldDiffIncidence = ut.read_json(fn=BLDiffJsonFile, path=DiffIncidencePath, dtype= HCI_dtp)
         BLoldDiffIncidence = BLoldDiffIncidence[BLoldDiffIncidence["cD"] != ChangeDateStr]
         BLDiffIncidence = pd.concat([BLoldDiffIncidence, BLDiffIncidence])
     BLDiffIncidence.sort_values(by=["i", "m", "cD"], inplace=True)
     BLDiffIncidence.reset_index(inplace=True, drop=True)
-    ut.write_file(BLDiffIncidence, BLDiffIncidenceFeatherFull, compression="lz4")
-    filesToConvert.append((BLDiffIncidenceFeatherFull, "states_Diff.json", path))
-    return filesToConvert
+    ut.write_json(df=BLDiffIncidence, pt=DiffIncidencePath, fn=BLDiffJsonFile)
+    return
