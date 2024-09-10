@@ -79,18 +79,6 @@ def read_file(fn):
     return df
 
 
-def calc_incidence(df):
-    idIndexes = df.index.to_list()
-    for index in idIndexes:
-        indexPos = idIndexes.index(index)
-        cases7d = 0
-        for x in [y for y in range(0, 7) if indexPos - y >=0]:
-            cases7d += df.at[idIndexes[indexPos - x], "c"]
-        df.at[index, "c7"] = cases7d
-        df.at[index, "i7"] = (cases7d / df.at[index, "Einwohner"] * 100000).round(5)
-    df["c7"] = df["c7"].astype(int)
-    return df
-
 def copy(source, destination):
    with open(source, 'rb') as file:
        myFile = file.read()
