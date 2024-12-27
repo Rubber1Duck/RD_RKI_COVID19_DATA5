@@ -57,3 +57,4 @@ git add ':/dataStore/*.json'
 git add ':/dataStore/*.xz'
 git status -s
 git commit -m "update on $1"
+git push
