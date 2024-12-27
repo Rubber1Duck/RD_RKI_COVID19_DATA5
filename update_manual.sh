@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #get todays date
-DATE=$1
+DATE=$(date -d $1 '+%Y-%m-%d')
 
 if [[ "$DATE" == "" ]]; then
   DATE2=$(date '+%Y-%m-%dT%H:%M:%SZ')
@@ -53,3 +53,7 @@ ENDTIME=`date +%s`
 TOTALSEC=`expr $ENDTIME - $STARTTIME`
 TIME=`date -d@$TOTALSEC -u +%H:%M:%S`
 echo "$DATE2 : Update finished. Total execution time $TIME ."
+git add ':/dataStore/*.json'
+git add ':/dataStore/*.xz'
+git status -s
+git commit -m "update on $1"
