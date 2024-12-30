@@ -36,47 +36,32 @@ def build_meta(datum):
   return new_meta
 
 if __name__ == '__main__':
-  start = dt.datetime.now()
-  if len(sys.argv) == 1:
-    startDatum = dt.datetime.strftime(start.date(), "%Y-%m-%d")
-    endDatum = dt.datetime.strftime(start.date(), "%Y-%m-%d")
-  elif len(sys.argv) == 2:
+  if len(sys.argv) == 2:
     startDatum = sys.argv[1]
-    endDatum = sys.argv[1]
-  elif len(sys.argv) == 3:
-    startDatum = sys.argv[1]
-    endDatum = sys.argv[2]
-  elif len(sys.argv) > 3:
-    raise ValueError('not more than 2 arguments are allowed')
-  startObject = dt.datetime.strptime(startDatum, '%Y-%m-%d')
-  endObject = dt.datetime.strptime(endDatum, '%Y-%m-%d')
-  
+  else:
+    raise ValueError('not more than 1 arguments is allowed')
   base_path = os.path.dirname(os.path.abspath(__file__))
   aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
-  print(f"{aktuelleZeit} : running from {startObject} to {endObject}")
-  for datumloop in pd.date_range(start=startObject, end=endObject).tolist():
-    startTime = dt.datetime.now()
-    datum = datumloop.strftime('%Y-%m-%d')
-    aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
-    print (f"{aktuelleZeit} : running on {datum}")
+  startTime = dt.datetime.now()
+  aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
+  print (f"{aktuelleZeit} : running on {startDatum}")
     
-    new_meta = build_meta(datum)
+  new_meta = build_meta(startDatum)
         
-    metaNew_path = os.path.join(base_path, "..", "dataStore", "meta", "meta_new.json")
-    metaNew_path = os.path.normpath(metaNew_path)
-    with open(metaNew_path, "w", encoding="utf8") as json_file:
-      json.dump(new_meta, json_file, ensure_ascii=False)
+  metaNew_path = os.path.join(base_path, "..", "dataStore", "meta", "meta_new.json")
+  metaNew_path = os.path.normpath(metaNew_path)
+  with open(metaNew_path, "w", encoding="utf8") as json_file:
+    json.dump(new_meta, json_file, ensure_ascii=False)
         
-    update(new_meta)
+  update(new_meta)
     
-    meta_path = os.path.join(base_path, "..", "dataStore", "meta", "meta.json")
-    meta_path = os.path.normpath(meta_path)
-    if os.path.exists(meta_path):
-      os.remove(meta_path)
-    os.rename(metaNew_path, meta_path)
-    endTime = dt.datetime.now()
-    aktuelleZeit = dt.datetime.now().strftime(format="%Y-%m-%dT%H:%M:%SZ")
-    print(f"{aktuelleZeit} : total time for date: {datum} => {endTime - startTime}")
-    print("****************************************************")
-  end = dt.datetime.now()
-  print(f"{aktuelleZeit} : overall time for range {startObject} to {endObject} is => {end - start}")
+  meta_path = os.path.join(base_path, "..", "dataStore", "meta", "meta.json")
+  meta_path = os.path.normpath(meta_path)
+  if os.path.exists(meta_path):
+    os.remove(meta_path)
+  os.rename(metaNew_path, meta_path)
+  endTime = dt.datetime.now()
+  aktuelleZeit = endTime.strftime(format="%Y-%m-%dT%H:%M:%SZ")
+  print(f"{aktuelleZeit} : total time : {endTime - startTime}")
+  print("****************************************************")
+  

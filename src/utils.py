@@ -36,15 +36,7 @@ def write_file(df, fn, compression=""):
     return
 
 
-def write_json(df, fn, pt, Datenstand="", archivePath=""):
-    full_fn = os.path.join(pt, fn)
-    if archivePath != "":
-        full_archiv_fn = os.path.join(archivePath, Datenstand + "_" + fn)
-        try:
-            os.rename(full_fn, full_archiv_fn)
-        except:
-            print(full_fn, "does not exists!")
-
+def write_json(df, full_fn):
     df.to_json(
         path_or_buf=full_fn,
         orient="records",
@@ -56,8 +48,7 @@ def write_json(df, fn, pt, Datenstand="", archivePath=""):
     return
 
 
-def read_json(fn, dtype, path=""):
-    full_fn = os.path.join(path, fn)
+def read_json(full_fn, dtype):
     df = pd.read_json(full_fn, dtype=dtype)
 
     return df
