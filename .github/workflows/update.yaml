@@ -9,17 +9,17 @@ jobs:
         shell: bash -l {0}
         working-directory: ./.github/workflows
     steps:
-      - uses: actions/checkout@master
-      - uses: conda-incubator/setup-miniconda@v3
+      - name: Checkout
+        uses: actions/checkout@master
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
         with:
-          auto-activate-base: false
-          activate-environment: covid
-          python-version: 3.11
-          miniconda-version: "latest"
-          channels: conda-forge,defaults
-      - name: Install requirements
-        run: pip install -r ./requirements.txt
+          python-version: "3.12"
+      - name: Install dependencies
         working-directory: ./
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
       - name: update
         id: update
         run: ./update_ghAction.sh
