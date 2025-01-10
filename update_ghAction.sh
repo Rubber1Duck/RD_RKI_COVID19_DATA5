@@ -28,9 +28,9 @@ VERSION7ZIP="2301"
 ./get7Zip.sh ${VERSION7ZIP}
 
 # Print message
-DATE2=$(date '+%Y-%m-%dT%H:%M:%SZ')
-echo "$DATE2 : extract all data"
-./extract.sh
+#DATE2=$(date '+%Y-%m-%dT%H:%M:%SZ')
+#echo "$DATE2 : extract all data"
+#./extract.sh
 
 # Print message 
 DATE2=$(date '+%Y-%m-%dT%H:%M:%SZ')
@@ -40,13 +40,13 @@ python ./src/build_metanew.py $DATE
 
 
 # compress json files in history
-rm -f ./*.xz
+#rm -f ./*.xz
 for file in `find dataStore/ -name "*.json"  ! -name "meta.json" -or -name "*.feather" -type f`;
   do
     DATE2=$(date '+%Y-%m-%dT%H:%M:%SZ')
     SIZE1=$(stat -c%s $file)
     echo "$DATE2 : start compressing $file ($SIZE1 bytes)"
-    ./7zzs a -txz -mmt4 -mx=9 -sdel -stl -bso0 -bsp0 "./$file.xz" "./$file"
+    ./7zzs a -txz -mmt4 -mx=7 -sdel -stl -bso0 -bsp0 "./$file.xz" "./$file"
     SIZE2=$(stat -c%s $file.xz)
     QUOTE=$(gawk "BEGIN {OFMT=\"%.4f\"; print $SIZE2 / $SIZE1 * 100;}")
     DATE2=$(date '+%Y-%m-%dT%H:%M:%SZ')
