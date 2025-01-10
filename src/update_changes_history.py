@@ -59,7 +59,7 @@ def update(meta):
     del BL
     gc.collect()
 
-    # store all files not compressed! will be done later
+    # read compressed, but store uncompressed! compressing will be done in bash script with 7zip
     LKcasesJsonFull = os.path.join(base_path, "..", "dataStore", "history", "cases", "districts.json.xz")
     LKdeathsJsonFull = os.path.join(base_path, "..", "dataStore", "history", "deaths", "districts.json.xz")
     LKrecoveredJsonFull = os.path.join(base_path, "..", "dataStore", "history", "recovered", "districts.json.xz")
