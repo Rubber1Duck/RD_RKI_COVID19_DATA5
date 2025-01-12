@@ -24,7 +24,7 @@ echo "$DATE2 : Start update with actual data (last modified: $lastModified)"
 # download static 7zip
 DATE2=$(date '+%Y-%m-%dT%H:%M:%SZ')
 echo "$DATE2 : download static 7zip"
-VERSION7ZIP="2301"
+VERSION7ZIP="2409"
 ./get7Zip.sh ${VERSION7ZIP}
 
 # Print message
