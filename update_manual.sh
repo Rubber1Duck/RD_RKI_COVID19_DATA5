@@ -14,27 +14,20 @@ STARTTIME=`date +%s`
 DATE2=$(date '+%Y-%m-%dT%H:%M:%SZ')
 echo "$DATE2 : Start update with date: $DATE)"
 
-# download static 7zip
-DATE2=$(date '+%Y-%m-%dT%H:%M:%SZ')
-echo "$DATE2 : download static 7zip"
-VERSION7ZIP="2600"
-./get7Zip.sh ${VERSION7ZIP}
-
-# Print message
-DATE2=$(date '+%Y-%m-%dT%H:%M:%SZ')
-echo "$DATE2 : extract all data"
-./extract.sh
-
 # Print message 
 DATE2=$(date '+%Y-%m-%dT%H:%M:%SZ')
 echo "$DATE2 : executing python build_metanew.py $DATE"
-
 python ./src/build_metanew.py $DATE
 
+# download static 7zip
+DATE2=$(date '+%Y-%m-%dT%H:%M:%SZ')
+VERSION7ZIP="2600"
+echo "$DATE2 : download static 7zip Version $VERSION7ZIP"
+./get7Zip.sh ${VERSION7ZIP}
 
 # compress json files in history
 rm -f ./*.xz
-for file in `find dataStore/ -name "*.json"  ! -name "meta.json" -or -name "*.feather" -type f`;
+for file in `find dataStore/ -name "*.json"  ! -name "meta.json" -type f`;
   do
     DATE2=$(date '+%Y-%m-%dT%H:%M:%SZ')
     SIZE1=$(stat -c%s $file)
