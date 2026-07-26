@@ -1,0 +1,13 @@
+# data
+dataStore/frozen-incidence/csv/*.xlsm
+data/*.cmd
+
+# Python defaults
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+.venv
+.venvlinux
+.vscode
